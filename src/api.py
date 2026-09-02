@@ -1,9 +1,24 @@
+import os
+from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessage
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 
+
+load_dotenv()
+
 # Initialize the FastAPI app
 app = FastAPI(title="Ashen Era AI Assistant API")
+
+llm = ChatOpenAI(
+    openai_api_key=os.getenv("OPENROUTER_API_KEY"),
+    openai_api_base="https://openrouter.ai/api/v1",
+    model_name="google/gemma-4-31b-it:free", 
+    max_retries=10, # <--- ADD THIS LINE! This tells it to wait and try again automatically if it fails.
+)
 
 # Allow the frontend to connect without CORS errors
 app.add_middleware(
@@ -25,22 +40,17 @@ class ChatResponse(BaseModel):
 # The main chat endpoint
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
-    """
-    This is the backend endpoint the frontend will call.
-    Right now, it returns dummy data so the Frontend developer can start working.
-    Later, we will replace this dummy logic with the real LangChain RAG pipeline!
-    """
     print(f"Received question from frontend: {request.question}")
     
-    # TODO: Connect to Member 1's Vector Database
-    # TODO: Implement Multi-hop retrieval for Track 1B
-    # TODO: Send facts to OpenRouter LLM
-    
-    # DUMMY RESPONSE (To unblock Frontend Developer)
-    dummy_answer = f"This is a placeholder answer for your question: '{request.question}'. The real AI logic is under construction!"
-    dummy_sources = ["chronicles_vol1.pdf", "wiki_factions.md"]
-    
-    return ChatResponse(answer=dummy_answer, sources=dummy_sources)
-
-# To run this server, use the command:
-# uvicorn src.api:app --reload
+    try:
+        messages = [HumanMessage(content=request.question)]
+        ai_response = llm.invoke(messages)
+        real_answer = ai_response.content
+        dummy_sources = ["Waiting for Database..."]
+        return ChatResponse(answer=real_answer, sources=dummy_sources)
+        
+    except Exception as e:
+        # If OpenRouter is rate-limited or the model is down, we catch the error!
+        error_message = f"OpenRouter API Error: {str(e)}"
+        print(error_message)
+        return ChatResponse(answer=error_message, sources=["Error Log"])

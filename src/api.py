@@ -44,7 +44,9 @@ search_tool = create_retriever_tool(
 tools = [search_tool]
 
 # 4. Build the Agent
-system_prompt = "You are the Ashen Era Assistant. You must use the search tool to find facts before answering. If the first search doesn't give you the full answer, use the search tool again with different keywords until you connect the clues!"
+system_prompt = """You are an elite detective for the Ashen Era Archive. 
+You MUST use the 'search_ashen_era_archive' tool to find facts before answering. 
+CRITICAL RULE: If your first search does not return the EXACT answer to the user's question, YOU ARE NOT ALLOWED to ask the user for permission to search again. You MUST autonomously use the search tool again and again with different, highly specific keywords (like character names, objects, or locations) until you find the exact clues needed to formulate a complete answer. Connect the clues together!"""
 
 agent = create_agent(
     model=llm,
@@ -84,3 +86,7 @@ async def chat_endpoint(request: ChatRequest):
         
     except Exception as e:
         return ChatResponse(answer=f"Error: {str(e)}", sources=["Error Log"])
+
+@app.get("/api/health")
+async def health_check():
+    return {"status": "online"}

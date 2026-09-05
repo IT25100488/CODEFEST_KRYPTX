@@ -1,134 +1,84 @@
 'use client';
 
 import React from 'react';
-import {
-  BookOpen,
-  HelpCircle,
-  FileCode,
-  Users,
-  Compass,
-  ArrowRight,
-  Database
-} from 'lucide-react';
+import { X, Sparkles, Database, FileText } from 'lucide-react';
 import { SAMPLE_QUESTIONS } from '../data/sampleQuestions';
 import { SampleQuestion } from '../types/chat';
 
 interface SidebarProps {
   onSelectQuestion: (question: string) => void;
   isOpen: boolean;
-  onToggle: () => void;
+  onClose: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   onSelectQuestion,
   isOpen,
-  onToggle,
+  onClose,
 }) => {
+  if (!isOpen) return null;
+
   return (
-    <>
-      {/* Mobile backdrop */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm lg:hidden"
-          onClick={onToggle}
-        />
-      )}
+    <div className="fixed inset-0 z-40 flex">
+      {/* Backdrop */}
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
-      <aside
-        className={`fixed lg:static top-[57px] bottom-0 left-0 z-20 w-80 bg-slate-950/95 border-r border-amber-900/20 backdrop-blur-xl flex flex-col justify-between p-4 transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
-      >
-        <div className="space-y-6 overflow-y-auto pr-1">
-          {/* Corpus Structure Summary */}
-          <div className="space-y-2.5">
-            <div className="flex items-center gap-2 text-xs font-semibold text-amber-400 uppercase tracking-wider">
-              <Database className="w-3.5 h-3.5" />
-              <span>The Ashen Era Archive</span>
+      {/* Slide-over Drawer */}
+      <aside className="relative w-80 max-w-[85vw] h-full bg-slate-950 border-r border-slate-800 shadow-2xl flex flex-col justify-between p-5 z-50 animate-slideLeft">
+        <div className="space-y-6 overflow-y-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Sample Inquiries</span>
             </div>
-
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                <span className="text-slate-400 block text-[11px]">Codex Volumes</span>
-                <span className="font-mono text-sm font-bold text-slate-200">3 Data Books</span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                <span className="text-slate-400 block text-[11px]">Wiki Lore</span>
-                <span className="font-mono text-sm font-bold text-slate-200">90 Articles</span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                <span className="text-slate-400 block text-[11px]">Ephemera</span>
-                <span className="font-mono text-sm font-bold text-slate-200">~150 Records</span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                <span className="text-slate-400 block text-[11px]">Novel Volumes</span>
-                <span className="font-mono text-sm font-bold text-slate-200">4 Volumes</span>
-              </div>
-            </div>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-900 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
 
-          {/* Sample Prompts (Track 1B Multi-Hop) */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-semibold text-amber-400 uppercase tracking-wider">
-                <HelpCircle className="w-3.5 h-3.5" />
-                <span>Test Prompts (Track 1B)</span>
-              </div>
-              <span className="text-[10px] text-slate-500 font-mono">1-Click Demo</span>
-            </div>
+          {/* Sample Prompts */}
+          <div className="space-y-2">
+            {SAMPLE_QUESTIONS.map((q: SampleQuestion) => (
+              <button
+                key={q.id}
+                onClick={() => {
+                  onSelectQuestion(q.question);
+                  onClose();
+                }}
+                className="w-full text-left p-3 rounded-xl bg-slate-900/60 hover:bg-slate-900 border border-slate-800/80 hover:border-amber-500/30 transition-all text-xs text-slate-300 group"
+              >
+                <div className="text-[10px] text-amber-400/80 font-mono mb-1 flex items-center justify-between">
+                  <span>{q.category}</span>
+                  <span className="opacity-75">{q.hops} Hops</span>
+                </div>
+                <p className="leading-snug text-slate-200 group-hover:text-amber-200 line-clamp-2">
+                  {q.question}
+                </p>
+              </button>
+            ))}
+          </div>
 
-            <p className="text-[11px] text-slate-400 leading-normal">
-              Official evaluation benchmarks requiring multi-hop synthesis across documents:
+          {/* Corpus Info */}
+          <div className="pt-4 border-t border-slate-900 text-xs text-slate-400 space-y-2">
+            <div className="flex items-center gap-1.5 text-slate-300 font-medium">
+              <Database className="w-3.5 h-3.5 text-amber-400" />
+              <span>Corpus Scope</span>
+            </div>
+            <p className="text-[11px] leading-relaxed text-slate-400">
+              415 documents (Novels, Wiki, Codex, Ephemera) indexed with ChromaDB and Voyage embeddings.
             </p>
-
-            <div className="space-y-2">
-              {SAMPLE_QUESTIONS.map((q: SampleQuestion) => (
-                <button
-                  key={q.id}
-                  onClick={() => {
-                    onSelectQuestion(q.question);
-                    if (window.innerWidth < 1024) onToggle();
-                  }}
-                  className="w-full text-left p-3 rounded-xl bg-slate-900/70 hover:bg-slate-850 border border-slate-800/80 hover:border-amber-500/30 transition-all group"
-                >
-                  <div className="flex items-center justify-between text-[10px] text-amber-400/90 font-mono mb-1">
-                    <span>{q.category}</span>
-                    <span className="px-1.5 py-0.2 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300">
-                      {q.hops} Hops
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-200 font-medium group-hover:text-amber-200 line-clamp-2 leading-relaxed">
-                    {q.question}
-                  </p>
-                  <div className="flex items-center gap-1 text-[11px] text-slate-500 group-hover:text-amber-400/80 mt-2 font-mono">
-                    <span>Ask assistant</span>
-                    <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                </button>
-              ))}
-            </div>
           </div>
         </div>
 
-        {/* Footer: Team & Competition info */}
-        <div className="pt-4 border-t border-slate-900 space-y-2">
-          <div className="p-3 rounded-xl bg-slate-900/50 border border-slate-800/60 text-xs">
-            <div className="flex items-center gap-2 text-slate-300 font-semibold mb-1">
-              <Users className="w-3.5 h-3.5 text-amber-400" />
-              <span>Team KRYPTX</span>
-            </div>
-            <p className="text-[11px] text-slate-400">
-              SLIIT Codefest 2026 • AI Challenge Powered by IFS
-            </p>
-            <div className="mt-2 text-[10px] text-slate-500 font-mono flex flex-wrap gap-1">
-              <span className="text-amber-400/90">Dumindu (UI/UX)</span> •
-              <span>Himath</span> •
-              <span>Hirusha</span> •
-              <span>Vishwa</span>
-            </div>
-          </div>
+        {/* Team Footer */}
+        <div className="pt-4 border-t border-slate-900 text-[11px] text-slate-500">
+          <span>SLIIT Codefest 2026 • Team KRYPTX</span>
         </div>
       </aside>
-    </>
+    </div>
   );
 };

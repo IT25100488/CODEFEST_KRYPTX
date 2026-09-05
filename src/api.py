@@ -2,34 +2,45 @@ import os
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
-
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 
+# NEW IMPORTS FOR DATABASE
+from langchain_chroma import Chroma
+from langchain_voyageai import VoyageAIEmbeddings
 
 load_dotenv()
 
-# Initialize the FastAPI app
 app = FastAPI(title="Ashen Era AI Assistant API")
 
+# 1. Connect to the LLM (The Brain)
 llm = ChatOpenAI(
     openai_api_key=os.getenv("OPENROUTER_API_KEY"),
     openai_api_base="https://openrouter.ai/api/v1",
-    model_name="google/gemma-4-31b-it:free", 
-    max_retries=10, # <--- ADD THIS LINE! This tells it to wait and try again automatically if it fails.
+    model_name="liquid/lfm-2.5-2.6b:free", 
+    max_retries=10,
 )
 
-# Allow the frontend to connect without CORS errors
+# 2. Connect to the Database (The Memory)
+embeddings = VoyageAIEmbeddings(
+    voyage_api_key=os.getenv("VOYAGE_API_KEY"), 
+    model="voyage-3"
+)
+vector_db = Chroma(
+    persist_directory="data/vector_db", 
+    embedding_function=embeddings,
+    collection_name="ashen_era_archive"
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, replace with your frontend URL
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Define the data structure we expect from the frontend
 class ChatRequest(BaseModel):
     question: str
 
@@ -37,20 +48,34 @@ class ChatResponse(BaseModel):
     answer: str
     sources: list[str]
 
-# The main chat endpoint
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
-    print(f"Received question from frontend: {request.question}")
+    print(f"Received question: {request.question}")
     
     try:
-        messages = [HumanMessage(content=request.question)]
+        #  Search the database for the 3 most relevant paragraphs!
+        results = vector_db.similarity_search(request.question, k=3)
+        
+        #  Combine the facts into a giant string
+        context = ""
+        sources = []
+        for doc in results:
+            context += doc.page_content + "\n\n"
+            sources.append(doc.metadata.get("filename", "Unknown file"))
+            
+        #  Tell the AI to use ONLY these facts to answer
+        prompt = f"""You are the Ashen Era Assistant. Answer the question using ONLY the facts below.
+        
+        FACTS:
+        {context}
+        
+        QUESTION: {request.question}"""
+        
+        messages = [HumanMessage(content=prompt)]
         ai_response = llm.invoke(messages)
-        real_answer = ai_response.content
-        dummy_sources = ["Waiting for Database..."]
-        return ChatResponse(answer=real_answer, sources=dummy_sources)
+        
+         #Return the answer AND the source files we found!
+        return ChatResponse(answer=ai_response.content, sources=sources)
         
     except Exception as e:
-        # If OpenRouter is rate-limited or the model is down, we catch the error!
-        error_message = f"OpenRouter API Error: {str(e)}"
-        print(error_message)
-        return ChatResponse(answer=error_message, sources=["Error Log"])
+        return ChatResponse(answer=f"Error: {str(e)}", sources=["Error Log"])

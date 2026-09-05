@@ -1,20 +1,21 @@
 import os
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 
-# NEW IMPORTS FOR DATABASE
+# LangChain Imports
+from langchain_openai import ChatOpenAI
 from langchain_chroma import Chroma
 from langchain_voyageai import VoyageAIEmbeddings
+from langchain_core.tools import create_retriever_tool
+from langchain.agents import create_agent
 
 load_dotenv()
 
 app = FastAPI(title="Ashen Era AI Assistant API")
 
-# 1. Connect to the LLM (The Brain)
+# 1. Connect to the LLM
 llm = ChatOpenAI(
     openai_api_key=os.getenv("OPENROUTER_API_KEY"),
     openai_api_base="https://openrouter.ai/api/v1",
@@ -22,7 +23,7 @@ llm = ChatOpenAI(
     max_retries=10,
 )
 
-# 2. Connect to the Database (The Memory)
+# 2. Connect to the Database
 embeddings = VoyageAIEmbeddings(
     voyage_api_key=os.getenv("VOYAGE_API_KEY"), 
     model="voyage-3"
@@ -31,6 +32,25 @@ vector_db = Chroma(
     persist_directory="data/vector_db", 
     embedding_function=embeddings,
     collection_name="ashen_era_archive"
+)
+
+# 3. Create the Search Tool for the Agent
+retriever = vector_db.as_retriever(search_kwargs={"k": 3})
+search_tool = create_retriever_tool(
+    retriever,
+    "search_ashen_era_archive",
+    "Searches the Ashen Era database for facts. Use this to find clues to answer questions."
+)
+tools = [search_tool]
+
+# 4. Build the Agent
+system_prompt = "You are the Ashen Era Assistant. You must use the search tool to find facts before answering. If the first search doesn't give you the full answer, use the search tool again with different keywords until you connect the clues!"
+
+agent = create_agent(
+    model=llm,
+    tools=tools,
+    system_prompt=system_prompt,
+    debug=True # This prints the agent's thoughts to the terminal!
 )
 
 app.add_middleware(
@@ -50,32 +70,17 @@ class ChatResponse(BaseModel):
 
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
-    print(f"Received question: {request.question}")
+    print(f"\n--- NEW QUESTION: {request.question} ---")
     
     try:
-        #  Search the database for the 3 most relevant paragraphs!
-        results = vector_db.similarity_search(request.question, k=3)
+        # Ask the Agent to solve the problem
+        inputs = {"messages": [{"role": "user", "content": request.question}]}
+        response = agent.invoke(inputs)
         
-        #  Combine the facts into a giant string
-        context = ""
-        sources = []
-        for doc in results:
-            context += doc.page_content + "\n\n"
-            sources.append(doc.metadata.get("filename", "Unknown file"))
-            
-        #  Tell the AI to use ONLY these facts to answer
-        prompt = f"""You are the Ashen Era Assistant. Answer the question using ONLY the facts below.
+        # Get the final answer message
+        final_answer = response["messages"][-1].content
         
-        FACTS:
-        {context}
-        
-        QUESTION: {request.question}"""
-        
-        messages = [HumanMessage(content=prompt)]
-        ai_response = llm.invoke(messages)
-        
-         #Return the answer AND the source files we found!
-        return ChatResponse(answer=ai_response.content, sources=sources)
+        return ChatResponse(answer=final_answer, sources=["Agent Search Results"])
         
     except Exception as e:
         return ChatResponse(answer=f"Error: {str(e)}", sources=["Error Log"])

@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   ArrowUp,
   Sparkles,
-  BookOpen,
   PanelLeft
 } from 'lucide-react';
 import { Header } from '../components/Header';
@@ -87,7 +86,7 @@ export default function Home() {
 
         if (!mockData) {
           mockData = {
-            content: `**Synthesized Archival Finding**\n\nCross-referencing the 415 documents across the Ashen Era Archive indicates related records in both the **Codex Annals** and **Wiki Chronicles**.\n\nThe queried entities share institutional affiliations connected through treaties established during the Third Era.`,
+            content: `**Synthesized Archival Finding**\n\nCross-referencing the 415 documents across the archive indicates verified records in both the **Codex Annals** and **Wiki Chronicles**.\n\nThe queried entities share institutional affiliations connected through treaties established during the Third Era.`,
             reasoning: `Hop 1: Located candidate character records in 'the_annals_of_the_ashen_era.pdf'.\nHop 2: Linked faction to recorded treaty outcome in 'the_leaden_accord.md'.\nHop 3: Synthesized multi-hop relationship chain without external assumptions.`,
             sources: [
               {
@@ -145,7 +144,7 @@ export default function Home() {
         const botMessage: ChatMessage = {
           id: `bot_${Date.now()}`,
           role: 'assistant',
-          content: data.answer || 'No answer found.',
+          content: data.answer || 'No answer found in archive.',
           reasoning: data.reasoning,
           sources: data.sources || [],
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -177,8 +176,8 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#090d16] text-slate-100 font-sans">
-      {/* Minimal Header */}
+    <div className="flex flex-col h-screen bg-[#f8fafc] text-slate-900 font-sans">
+      {/* Light Header with Group Name */}
       <Header
         isLiveBackend={isLiveBackend}
         isBackendHealthy={isBackendHealthy}
@@ -186,23 +185,23 @@ export default function Home() {
         onResetChat={() => setMessages([])}
       />
 
-      {/* Main Chat Workspace */}
+      {/* Main Chat Stage */}
       <div className="flex-1 flex flex-col justify-between max-w-3xl w-full mx-auto px-4 sm:px-6 overflow-hidden">
         {/* Messages Stream */}
         <div className="flex-1 overflow-y-auto py-6 space-y-2 pr-1">
           {messages.length === 0 ? (
-            /* Clean Empty State */
+            /* Clean, Fresh Empty State */
             <div className="h-full flex flex-col items-center justify-center text-center space-y-6 max-w-lg mx-auto my-auto animate-fadeIn">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shadow-lg">
-                <BookOpen className="w-6 h-6" />
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shadow-sm">
+                <Sparkles className="w-6 h-6" />
               </div>
 
               <div className="space-y-1.5">
-                <h2 className="text-xl font-semibold text-slate-100">
-                  Ashen Era Document Assistant
+                <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                  KRYPTX Document Assistant
                 </h2>
-                <p className="text-xs text-slate-400">
-                  Ask questions across 415 documents, codex books, and archive records.
+                <p className="text-xs text-slate-500">
+                  Ask multi-hop questions across 415 documents, codex books, and records.
                 </p>
               </div>
 
@@ -212,10 +211,10 @@ export default function Home() {
                   <button
                     key={sq.id}
                     onClick={() => handleSendMessage(sq.question)}
-                    className="w-full p-3 rounded-xl bg-slate-900/60 hover:bg-slate-900 border border-slate-800/80 hover:border-slate-700 text-xs text-slate-300 hover:text-slate-100 transition-colors flex items-center justify-between group"
+                    className="w-full p-3.5 rounded-xl bg-white hover:bg-blue-50/40 border border-slate-200/90 hover:border-blue-300 text-xs text-slate-700 hover:text-blue-900 transition-all shadow-xs flex items-center justify-between group"
                   >
-                    <span className="truncate pr-2">{sq.question}</span>
-                    <span className="text-[10px] text-amber-400/80 font-mono flex-shrink-0 opacity-80 group-hover:opacity-100">
+                    <span className="truncate pr-2 font-medium">{sq.question}</span>
+                    <span className="text-[11px] text-blue-600 font-mono flex-shrink-0 opacity-80 group-hover:opacity-100">
                       {sq.hops} Hops →
                     </span>
                   </button>
@@ -238,13 +237,13 @@ export default function Home() {
           )}
         </div>
 
-        {/* Clean Input Area */}
+        {/* Clean Light Input Area */}
         <div className="py-4">
-          <div className="relative flex items-center bg-slate-900/90 border border-slate-800 rounded-2xl p-1.5 shadow-xl focus-within:border-slate-700 transition-colors">
-            {/* Optional Sidebar Toggle Button */}
+          <div className="relative flex items-center bg-white border border-slate-200 rounded-2xl p-1.5 shadow-sm focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all">
+            {/* Slide-over Drawer Trigger */}
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="p-2 text-slate-500 hover:text-slate-300 rounded-xl transition-colors"
+              className="p-2 text-slate-400 hover:text-blue-600 rounded-xl transition-colors"
               title="View all sample questions"
             >
               <PanelLeft className="w-4 h-4" />
@@ -256,9 +255,9 @@ export default function Home() {
               value={inputValue}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              placeholder="Ask a question about the Ashen Era Archive..."
+              placeholder="Ask a question about the documents..."
               rows={1}
-              className="flex-1 bg-transparent text-sm text-slate-100 placeholder-slate-500 resize-none outline-none px-2 py-1.5 max-h-32 leading-relaxed"
+              className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 resize-none outline-none px-2 py-1.5 max-h-32 leading-relaxed"
             />
 
             {/* Send Button */}
@@ -267,8 +266,8 @@ export default function Home() {
               disabled={!inputValue.trim() || isThinking}
               className={`p-2 rounded-xl transition-all duration-150 flex items-center justify-center ${
                 inputValue.trim() && !isThinking
-                  ? 'bg-amber-500 text-slate-950 hover:bg-amber-400 cursor-pointer shadow'
-                  : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-40'
+                  ? 'bg-blue-600 text-white hover:bg-blue-500 cursor-pointer shadow-sm'
+                  : 'bg-slate-100 text-slate-400 cursor-not-allowed'
               }`}
               title="Send message"
             >
@@ -276,13 +275,13 @@ export default function Home() {
             </button>
           </div>
 
-          <div className="mt-2 text-center text-[10px] text-slate-400 font-mono">
+          <div className="mt-2 text-center text-[11px] text-slate-400 font-mono">
             <span>Enter to submit • Shift+Enter for new line</span>
           </div>
         </div>
       </div>
 
-      {/* Slide-over Prompts Drawer (when clicking panel icon) */}
+      {/* Slide-over Prompts Drawer */}
       <Sidebar
         onSelectQuestion={(q) => handleSendMessage(q)}
         isOpen={isSidebarOpen}

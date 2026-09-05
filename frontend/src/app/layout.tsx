@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Ashen Era Archive — Intelligent Multi-Hop Document Assistant',
+  title: 'KRYPTX — Intelligent Document Assistant',
   description:
-    'SLIIT Codefest 2026 AI Competition (Track 1B: Connecting Facts Across Thousands of Pages). Powered by Multi-Hop RAG, ChromaDB, and Voyage AI.',
+    'SLIIT Codefest 2026 AI Competition (Track 1B: Connecting Facts Across Thousands of Pages). Built by Team KRYPTX.',
 };
 
 export default function RootLayout({
@@ -26,9 +26,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#080c14] text-slate-100 selection:bg-amber-500/30 selection:text-amber-200">
+      <body className="min-h-full flex flex-col bg-[#f8fafc] text-slate-900 selection:bg-blue-100 selection:text-blue-900">
         {children}
       </body>
     </html>

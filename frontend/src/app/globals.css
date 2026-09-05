@@ -2,8 +2,8 @@
 
 @layer base {
   :root {
-    --background: #080c14;
-    --foreground: #f1f5f9;
+    --background: #f8fafc;
+    --foreground: #0f172a;
   }
 
   body {
@@ -19,23 +19,23 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: rgba(15, 23, 42, 0.6);
+    background: #f1f5f9;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(217, 119, 6, 0.3);
+    background: #cbd5e1;
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(245, 158, 11, 0.5);
+    background: #94a3b8;
   }
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -53,22 +53,9 @@
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-slideLeft {
-  animation: slideLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes spinSlow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.animate-spin-slow {
-  animation: spinSlow 4s linear infinite;
+  animation: slideLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

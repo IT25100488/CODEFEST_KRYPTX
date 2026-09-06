@@ -8,14 +8,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from langchain_openai import ChatOpenAI
 from langchain_chroma import Chroma
 from langchain_voyageai import VoyageAIEmbeddings
-from langchain_core.tools import create_retriever_tool
+from langchain_core.tools import tool
 from langchain.agents import create_agent
 
 load_dotenv()
 
 app = FastAPI(title="Ashen Era AI Assistant API")
 
-# 1. Connect to the LLM
 llm = ChatOpenAI(
     openai_api_key=os.getenv("OPENROUTER_API_KEY"),
     openai_api_base="https://openrouter.ai/api/v1",
@@ -23,7 +22,6 @@ llm = ChatOpenAI(
     max_retries=10,
 )
 
-# 2. Connect to the Database
 embeddings = VoyageAIEmbeddings(
     voyage_api_key=os.getenv("VOYAGE_API_KEY"), 
     model="voyage-3"
@@ -33,26 +31,46 @@ vector_db = Chroma(
     embedding_function=embeddings,
     collection_name="ashen_era_archive"
 )
-
-# 3. Create the Search Tool for the Agent
 retriever = vector_db.as_retriever(search_kwargs={"k": 3})
-search_tool = create_retriever_tool(
-    retriever,
-    "search_ashen_era_archive",
-    "Searches the Ashen Era database for facts. Use this to find clues to answer questions."
-)
-tools = [search_tool]
 
-# 4. Build the Agent
+# --- NEW: Intercept Sources for the UI ---
+current_request_sources = []
+
+@tool
+def search_ashen_era_archive(query: str) -> str:
+    """Searches the Ashen Era database for facts. Use this to find clues to answer questions."""
+    global current_request_sources
+    docs = retriever.invoke(query)
+    
+    formatted_results = []
+    for i, d in enumerate(docs):
+        # Extract the actual file name from the metadata (e.g. data/Ashen_Era_Archive/codex/book.pdf)
+        file_path = d.metadata.get("source", "Unknown Document")
+        file_name = os.path.basename(file_path)
+        
+        # Save for the React Frontend
+        current_request_sources.append({
+            "document": file_name,
+            "chunk": f"chunk-{i}",
+            "text": d.page_content[:500] + "..." # Send a preview to the UI
+        })
+        
+        # Send full text to the AI Agent
+        formatted_results.append(f"Document: {file_name}\nContent: {d.page_content}")
+        
+    return "\n\n---\n\n".join(formatted_results)
+
+tools = [search_ashen_era_archive]
+
 system_prompt = """You are an elite detective for the Ashen Era Archive. 
 You MUST use the 'search_ashen_era_archive' tool to find facts before answering. 
-CRITICAL RULE: If your first search does not return the EXACT answer to the user's question, YOU ARE NOT ALLOWED to ask the user for permission to search again. You MUST autonomously use the search tool again and again with different, highly specific keywords (like character names, objects, or locations) until you find the exact clues needed to formulate a complete answer. Connect the clues together!"""
+CRITICAL RULE: If your first search does not return the EXACT answer to the user's question, YOU ARE NOT ALLOWED to ask the user for permission to search again. You MUST autonomously use the search tool again and again with different, highly specific keywords until you find the exact clues needed to formulate a complete answer."""
 
 agent = create_agent(
     model=llm,
     tools=tools,
     system_prompt=system_prompt,
-    debug=True # This prints the agent's thoughts to the terminal!
+    debug=True 
 )
 
 app.add_middleware(
@@ -63,29 +81,36 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# --- NEW: Match the Frontend's Types ---
+class SourceEvidence(BaseModel):
+    document: str
+    chunk: str
+    text: str
+
 class ChatRequest(BaseModel):
     question: str
 
 class ChatResponse(BaseModel):
     answer: str
-    sources: list[str]
+    sources: list[SourceEvidence]
 
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
+    global current_request_sources
+    current_request_sources = [] # Clear sources for the new question
     print(f"\n--- NEW QUESTION: {request.question} ---")
     
     try:
-        # Ask the Agent to solve the problem
         inputs = {"messages": [{"role": "user", "content": request.question}]}
         response = agent.invoke(inputs)
         
-        # Get the final answer message
         final_answer = response["messages"][-1].content
         
-        return ChatResponse(answer=final_answer, sources=["Agent Search Results"])
+        # Return the exact documents intercepted
+        return ChatResponse(answer=final_answer, sources=current_request_sources)
         
     except Exception as e:
-        return ChatResponse(answer=f"Error: {str(e)}", sources=["Error Log"])
+        return ChatResponse(answer=f"Error: {str(e)}", sources=[])
 
 @app.get("/api/health")
 async def health_check():

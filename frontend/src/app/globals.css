@@ -59,3 +59,11 @@
 .animate-slideLeft {
   animation: slideLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Hide Next.js floating dev indicator button */
+nextjs-portal,
+[data-nextjs-toast],
+[data-nextjs-dev-overlay-root],
+[data-nextjs-dev-indicator] {
+  display: none !important;
+}

@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { Sparkles, Plus } from 'lucide-react';
+import { Plus, History } from 'lucide-react';
 
 interface HeaderProps {
   isLiveBackend: boolean;
   isBackendHealthy: boolean | null;
   onToggleMode: () => void;
   onResetChat: () => void;
+  onOpenSidebar?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -15,22 +16,37 @@ export const Header: React.FC<HeaderProps> = ({
   isBackendHealthy,
   onToggleMode,
   onResetChat,
+  onOpenSidebar,
 }) => {
   return (
     <header className="w-full border-b border-slate-200/80 bg-white/80 backdrop-blur-md px-4 sm:px-8 py-3 flex items-center justify-between sticky top-0 z-20">
-      {/* Group Brand */}
-      <div className="flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20 font-bold text-sm tracking-wide">
-          K
+      {/* Left: Brand & Previous Chats Button */}
+      <div className="flex items-center gap-2.5 sm:gap-4">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20 font-bold text-sm tracking-wide">
+            K
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-base text-slate-900 tracking-tight">
+              KRYPTX
+            </span>
+            <span className="text-[10px] text-blue-700 bg-blue-50 border border-blue-200/80 font-semibold px-2 py-0.5 rounded-full hidden sm:inline-block">
+              AI Assistant
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="font-bold text-base text-slate-900 tracking-tight">
-            KRYPTX
-          </span>
-          <span className="text-[10px] text-blue-700 bg-blue-50 border border-blue-200/80 font-semibold px-2 py-0.5 rounded-full">
-            AI Assistant
-          </span>
-        </div>
+
+        {/* Dedicated "Previous Chats" Button on Left Side */}
+        {onOpenSidebar && (
+          <button
+            onClick={onOpenSidebar}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:text-blue-700 bg-slate-100/90 hover:bg-blue-50 border border-slate-200 hover:border-blue-200 transition-all shadow-xs cursor-pointer"
+            title="View Previous Chats"
+          >
+            <History className="w-3.5 h-3.5 text-blue-600" />
+            <span>Previous Chats</span>
+          </button>
+        )}
       </div>
 
       {/* Actions */}
@@ -62,7 +78,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* New Chat */}
         <button
           onClick={onResetChat}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
           title="Start a new chat"
         >
           <Plus className="w-3.5 h-3.5" />

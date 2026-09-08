@@ -1,0 +1,26 @@
+{
+  "qid": "1b_006",
+  "question": "Which individual was a member of the faction that ultimately won the War of Drowned Light?",
+  "expected_answer": [
+    "Ignatz Fellgard",
+    "Brannoc Palefroth",
+    "Thessaly Coldwater",
+    "Lucan Hollowmere",
+    "Tamsin Greyfen",
+    "Ossric Ashgrove"
+  ],
+  "expected_chain": [
+    "The War of Drowned Light -> The Silent Choir",
+    "The Silent Choir -> confirmed members"
+  ],
+  "retrieval_method": "agentic_multi_hop",
+  "max_hops": 3,
+  "results_per_query": 5,
+  "max_total_evidence": 20,
+  "hop_1_found": true,
+  "hop_2_found": true,
+  "complete_chain_found": true,
+  "result": "SUCCESS",
+  "failure_category": "SUCCESS",
+  "notes": "Agentic retrieval found evidence that The Silent Choir was the victor of The War of Drowned Light and also retrieved a Silent Choir source listing confirmed members including Ignatz Fellgard, Brannoc Palefroth, Thessaly Coldwater, Lucan Hollowmere, Tamsin Greyfen, and Ossric Ashgrove."
+}

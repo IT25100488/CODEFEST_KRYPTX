@@ -1,0 +1,19 @@
+{
+  "qid": "1b_005",
+  "question": "Which war was won by the organization that included Isolde Mournvale as one of its members?",
+  "expected_answer": "The War of Drowned Light",
+  "expected_chain": [
+    "Isolde Mournvale -> The Silent Choir",
+    "The Silent Choir -> The War of Drowned Light"
+  ],
+  "retrieval_method": "agentic_multi_hop",
+  "max_hops": 3,
+  "results_per_query": 5,
+  "max_total_evidence": 20,
+  "hop_1_found": true,
+  "hop_2_found": true,
+  "complete_chain_found": true,
+  "result": "SUCCESS",
+  "failure_category": "SUCCESS",
+  "notes": "Agentic retrieval found evidence that Isolde Mournvale is a member of The Silent Choir and that The Silent Choir was the recorded victor of The War of Drowned Light."
+}

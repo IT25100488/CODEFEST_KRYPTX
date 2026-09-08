@@ -1,0 +1,23 @@
+{
+  "qid": "1b_009",
+  "baseline_query": "In what way is Halvard Crowhurst connected to the victors of the Purge of Blackport?",
+  "top_k": 5,
+
+  "retrieval_observation": {
+    "hop_1": {
+      "relationship": "Halvard Crowhurst -> The Iron-Ring Cartel",
+      "found_in_top_k": true
+    },
+
+    "hop_2": {
+      "relationship": "The Purge of Blackport -> The Iron-Ring Cartel",
+      "found_in_top_k": true
+    }
+  },
+
+  "complete_chain_found": true,
+  "result": "SUCCESS",
+  "failure_category": "SUCCESS",
+
+  "notes": "The original full-question retrieval contained both the membership relation and the victor relation within the top 5 results."
+}

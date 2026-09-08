@@ -1,0 +1,19 @@
+{
+  "qid": "1b_009",
+  "question": "In what way is Halvard Crowhurst connected to the victors of the Purge of Blackport?",
+  "expected_answer": "Halvard Crowhurst is a member of The Iron-Ring Cartel, the faction that won the Purge of Blackport.",
+  "expected_chain": [
+    "Halvard Crowhurst -> The Iron-Ring Cartel",
+    "The Iron-Ring Cartel -> The Purge of Blackport"
+  ],
+  "retrieval_method": "agentic_multi_hop",
+  "max_hops": 3,
+  "results_per_query": 5,
+  "max_total_evidence": 20,
+  "hop_1_found": true,
+  "hop_2_found": true,
+  "complete_chain_found": true,
+  "result": "SUCCESS",
+  "failure_category": "SUCCESS",
+  "notes": "Agentic retrieval found evidence that Halvard Crowhurst is a member of The Iron-Ring Cartel and that The Iron-Ring Cartel was the victor of The Purge of Blackport."
+}

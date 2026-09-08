@@ -1,0 +1,19 @@
+{
+  "qid": "1b_022",
+  "question": "Which war did Ravena Stormwell's own faction ultimately win?",
+  "expected_answer": "The War of Drowned Light",
+  "expected_chain": [
+    "Ravena Stormwell -> The Silent Choir",
+    "The Silent Choir -> The War of Drowned Light"
+  ],
+  "retrieval_method": "agentic_multi_hop",
+  "max_hops": 3,
+  "results_per_query": 5,
+  "max_total_evidence": 20,
+  "hop_1_found": true,
+  "hop_2_found": true,
+  "complete_chain_found": true,
+  "result": "SUCCESS",
+  "failure_category": "SUCCESS",
+  "notes": "Agentic retrieval found evidence that Ravena Stormwell is a member of The Silent Choir and that The Silent Choir was the victor of The War of Drowned Light."
+}

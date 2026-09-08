@@ -1,0 +1,8 @@
+{
+  "track": "1B",
+  "baseline_method": "single_query_top_5",
+  "baseline_complete_chain_rate": 14.29,
+  "agentic_method": "agentic_multi_hop",
+  "agentic_complete_chain_rate": 85.71,
+  "absolute_improvement_percentage_points": 71.42
+}

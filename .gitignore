@@ -1,5 +1,7 @@
 venv/
 .venv/
+.venu/
+.vscode/
 __pycache__/
 .env
 data/vector_db/

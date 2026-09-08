@@ -38,13 +38,17 @@ export async function POST(request: Request) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (err: unknown) {
+    const isTimeout = err instanceof Error && (err.name === 'TimeoutError' || err.name === 'AbortError');
     const errorMessage = err instanceof Error ? err.message : 'Unknown connection error';
     return NextResponse.json(
       {
-        error: `Could not connect to FastAPI backend at ${BACKEND_URL}. Ensure uvicorn is running. Details: ${errorMessage}`,
-        isOffline: true,
+        error: isTimeout
+          ? 'The AI model took too long to complete its response. Try refining your question or asking again.'
+          : `Could not connect to FastAPI backend at ${BACKEND_URL}. Ensure uvicorn is running. Details: ${errorMessage}`,
+        isOffline: !isTimeout,
+        isTimeout,
       },
-      { status: 503 }
+      { status: isTimeout ? 504 : 503 }
     );
   }
 }

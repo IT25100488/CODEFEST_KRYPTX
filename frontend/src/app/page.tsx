@@ -4,17 +4,18 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   ArrowUp,
   Sparkles,
-  PanelLeft
 } from 'lucide-react';
 import { Header } from '../components/Header';
 import { Sidebar } from '../components/Sidebar';
 import { ChatMessageBubble } from '../components/ChatMessageBubble';
 import { ThinkingIndicator } from '../components/ThinkingIndicator';
 import { EvidenceDrawer } from '../components/EvidenceDrawer';
-import { ChatMessage, SourceEvidence } from '../types/chat';
+import { ChatMessage, SourceEvidence, ChatSession } from '../types/chat';
 import { SAMPLE_QUESTIONS, MOCK_RESPONSES } from '../data/sampleQuestions';
 
 export default function Home() {
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isThinking, setIsThinking] = useState(false);
@@ -26,21 +27,64 @@ export default function Home() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Check FastAPI backend health on mount
+  // 1. Load chat history from localStorage when the page first opens
   useEffect(() => {
+    try {
+      const savedChats = localStorage.getItem('my_chat_sessions');
+      if (savedChats) {
+        const parsed = JSON.parse(savedChats);
+        if (Array.isArray(parsed)) {
+          if (parsed.length > 0 && 'messages' in parsed[0]) {
+            setSessions(parsed);
+          } else if (parsed.length > 0 && 'role' in parsed[0]) {
+            // Migrate legacy flat messages array to session format
+            const initialSession: ChatSession = {
+              id: `session_${Date.now()}`,
+              title: parsed[0]?.content?.slice(0, 36) || 'Previous Conversation',
+              messages: parsed,
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            };
+            setSessions([initialSession]);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load chat sessions from localStorage:', e);
+    }
+  }, []);
+
+  // 2. Automatically save sessions whenever sessions state updates
+  useEffect(() => {
+    if (sessions.length > 0) {
+      localStorage.setItem('my_chat_sessions', JSON.stringify(sessions));
+    }
+  }, [sessions]);
+
+  // Check FastAPI backend health on mount and poll every 4s to detect online status
+  useEffect(() => {
+    let isSubscribed = true;
+
     async function checkHealth() {
       try {
         const res = await fetch('/api/ask', { method: 'GET' });
-        if (res.ok) {
-          setIsBackendHealthy(true);
-        } else {
-          setIsBackendHealthy(false);
+        if (isSubscribed) {
+          setIsBackendHealthy(res.ok);
         }
       } catch {
-        setIsBackendHealthy(false);
+        if (isSubscribed) {
+          setIsBackendHealthy(false);
+        }
       }
     }
+
     checkHealth();
+    const interval = setInterval(checkHealth, 4000);
+
+    return () => {
+      isSubscribed = false;
+      clearInterval(interval);
+    };
   }, []);
 
   // Auto-scroll chat to bottom
@@ -57,6 +101,47 @@ export default function Home() {
     }
   };
 
+  // Start a new chat session in the same window
+  const handleNewChat = () => {
+    setActiveSessionId(null);
+    setMessages([]);
+    setInputValue('');
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
+  };
+
+  // Switch to an existing chat session from the history sidebar
+  const handleSelectSession = (session: ChatSession) => {
+    setActiveSessionId(session.id);
+    setMessages(session.messages);
+    setIsSidebarOpen(false);
+  };
+
+  // Delete a specific session
+  const handleDeleteSession = (sessionId: string) => {
+    const updated = sessions.filter((s) => s.id !== sessionId);
+    setSessions(updated);
+    if (updated.length === 0) {
+      localStorage.removeItem('my_chat_sessions');
+    } else {
+      localStorage.setItem('my_chat_sessions', JSON.stringify(updated));
+    }
+
+    if (activeSessionId === sessionId) {
+      handleNewChat();
+    }
+  };
+
+  // Clear all history
+  const handleClearHistory = () => {
+    if (window.confirm('Clear all chat history from this browser?')) {
+      localStorage.removeItem('my_chat_sessions');
+      setSessions([]);
+      handleNewChat();
+    }
+  };
+
   const handleSendMessage = async (textToSend?: string) => {
     const query = (textToSend || inputValue).trim();
     if (!query || isThinking) return;
@@ -67,6 +152,30 @@ export default function Home() {
       content: query,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
+
+    // Determine current session or initialize a new one
+    let currentSessionId = activeSessionId;
+    if (!currentSessionId) {
+      currentSessionId = `session_${Date.now()}`;
+      setActiveSessionId(currentSessionId);
+      const title = query.length > 36 ? `${query.slice(0, 36)}...` : query;
+      const newSession: ChatSession = {
+        id: currentSessionId,
+        title,
+        messages: [userMessage],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+      setSessions((prev) => [newSession, ...prev]);
+    } else {
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === currentSessionId
+            ? { ...s, messages: [...s.messages, userMessage], updatedAt: Date.now() }
+            : s
+        )
+      );
+    }
 
     setMessages((prev) => [...prev, userMessage]);
     setInputValue('');
@@ -111,6 +220,13 @@ export default function Home() {
         };
 
         setMessages((prev) => [...prev, botMessage]);
+        setSessions((prev) =>
+          prev.map((s) =>
+            s.id === currentSessionId
+              ? { ...s, messages: [...s.messages, botMessage], updatedAt: Date.now() }
+              : s
+          )
+        );
         setIsThinking(false);
       }, 1200);
       return;
@@ -128,8 +244,8 @@ export default function Home() {
 
       if (!response.ok) {
         const errorContent = data.isOffline
-          ? `⚠️ **FastAPI backend is not running yet.**\n\nTo connect live: have your teammate run \`python -m uvicorn api.main:app --reload\`.\n\nTip: You can switch to **"Demo Mode"** (top right) to test verified responses immediately.`
-          : `⚠️ **Server error**: ${data.error || 'Failed to generate response.'}`;
+          ? `⚠️ **FastAPI backend is not running yet.**\n\nTo connect live: run \`start_app.bat\` or \`uvicorn src.api:app --reload\`.\n\nTip: You can switch to **"Demo Mode"** (top right) to test verified responses immediately.`
+          : `⚠️ **Notice**: ${data.error || 'Failed to generate response.'}`;
 
         const errorMessage: ChatMessage = {
           id: `err_${Date.now()}`,
@@ -139,7 +255,16 @@ export default function Home() {
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages((prev) => [...prev, errorMessage]);
-        setIsBackendHealthy(false);
+        setSessions((prev) =>
+          prev.map((s) =>
+            s.id === currentSessionId
+              ? { ...s, messages: [...s.messages, errorMessage], updatedAt: Date.now() }
+              : s
+          )
+        );
+        if (data.isOffline) {
+          setIsBackendHealthy(false);
+        }
       } else {
         const botMessage: ChatMessage = {
           id: `bot_${Date.now()}`,
@@ -150,6 +275,13 @@ export default function Home() {
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages((prev) => [...prev, botMessage]);
+        setSessions((prev) =>
+          prev.map((s) =>
+            s.id === currentSessionId
+              ? { ...s, messages: [...s.messages, botMessage], updatedAt: Date.now() }
+              : s
+          )
+        );
         setIsBackendHealthy(true);
       }
     } catch (err: unknown) {
@@ -162,7 +294,16 @@ export default function Home() {
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, errorMessage]);
-      setIsBackendHealthy(false);
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === currentSessionId
+            ? { ...s, messages: [...s.messages, errorMessage], updatedAt: Date.now() }
+            : s
+        )
+      );
+      fetch('/api/ask', { method: 'GET' })
+        .then((res) => setIsBackendHealthy(res.ok))
+        .catch(() => setIsBackendHealthy(false));
     } finally {
       setIsThinking(false);
     }
@@ -177,12 +318,13 @@ export default function Home() {
 
   return (
     <div className="flex flex-col h-screen bg-[#f8fafc] text-slate-900 font-sans">
-      {/* Light Header with Group Name */}
+      {/* Light Header with Group Name, New Chat & Sidebar Trigger */}
       <Header
         isLiveBackend={isLiveBackend}
         isBackendHealthy={isBackendHealthy}
         onToggleMode={() => setIsLiveBackend((p) => !p)}
-        onResetChat={() => setMessages([])}
+        onResetChat={handleNewChat}
+        onOpenSidebar={() => setIsSidebarOpen(true)}
       />
 
       {/* Main Chat Stage */}
@@ -201,25 +343,33 @@ export default function Home() {
                   KRYPTX Document Assistant
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Ask multi-hop questions across 415 documents, codex books, and records.
+                  {isLiveBackend
+                    ? 'Connected to live archive. Ask any question across the 415 documents.'
+                    : 'Demo Mode active. Select a verified sample question below or enter your prompt.'}
                 </p>
               </div>
 
-              {/* Minimal Prompt Chips */}
-              <div className="w-full space-y-2 pt-2 text-left">
-                {SAMPLE_QUESTIONS.slice(0, 3).map((sq) => (
-                  <button
-                    key={sq.id}
-                    onClick={() => handleSendMessage(sq.question)}
-                    className="w-full p-3.5 rounded-xl bg-white hover:bg-blue-50/40 border border-slate-200/90 hover:border-blue-300 text-xs text-slate-700 hover:text-blue-900 transition-all shadow-xs flex items-center justify-between group"
-                  >
-                    <span className="truncate pr-2 font-medium">{sq.question}</span>
-                    <span className="text-[11px] text-blue-600 font-mono flex-shrink-0 opacity-80 group-hover:opacity-100">
-                      {sq.hops} Hops →
-                    </span>
-                  </button>
-                ))}
-              </div>
+              {/* Minimal Prompt Chips — ONLY visible in Demo Mode */}
+              {!isLiveBackend && (
+                <div className="w-full space-y-2 pt-2 text-left animate-fadeIn">
+                  <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-1 flex items-center justify-between">
+                    <span>Suggested Demo Questions</span>
+                    <span className="text-[10px] text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full font-medium">Demo Mode</span>
+                  </div>
+                  {SAMPLE_QUESTIONS.slice(0, 3).map((sq) => (
+                    <button
+                      key={sq.id}
+                      onClick={() => handleSendMessage(sq.question)}
+                      className="w-full p-3.5 rounded-xl bg-white hover:bg-blue-50/40 border border-slate-200/90 hover:border-blue-300 text-xs text-slate-700 hover:text-blue-900 transition-all shadow-xs flex items-center justify-between group cursor-pointer"
+                    >
+                      <span className="truncate pr-2 font-medium">{sq.question}</span>
+                      <span className="text-[11px] text-blue-600 font-mono flex-shrink-0 opacity-80 group-hover:opacity-100">
+                        {sq.hops} Hops →
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             /* Message List */
@@ -240,15 +390,6 @@ export default function Home() {
         {/* Clean Light Input Area */}
         <div className="py-4">
           <div className="relative flex items-center bg-white border border-slate-200 rounded-2xl p-1.5 shadow-sm focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all">
-            {/* Slide-over Drawer Trigger */}
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="p-2 text-slate-400 hover:text-blue-600 rounded-xl transition-colors"
-              title="View all sample questions"
-            >
-              <PanelLeft className="w-4 h-4" />
-            </button>
-
             {/* Textarea */}
             <textarea
               ref={textareaRef}
@@ -257,7 +398,7 @@ export default function Home() {
               onKeyDown={handleKeyDown}
               placeholder="Ask a question about the documents..."
               rows={1}
-              className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 resize-none outline-none px-2 py-1.5 max-h-32 leading-relaxed"
+              className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 resize-none outline-none px-3 py-2 max-h-32 leading-relaxed"
             />
 
             {/* Send Button */}
@@ -281,11 +422,18 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Slide-over Prompts Drawer */}
+      {/* Slide-over Previous Chats & Prompts Drawer */}
       <Sidebar
-        onSelectQuestion={(q) => handleSendMessage(q)}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
+        sessions={sessions}
+        activeSessionId={activeSessionId}
+        isLiveBackend={isLiveBackend}
+        onSelectSession={handleSelectSession}
+        onNewChat={handleNewChat}
+        onDeleteSession={handleDeleteSession}
+        onClearHistory={handleClearHistory}
+        onSelectQuestion={(q) => handleSendMessage(q)}
       />
 
       {/* Slide-over Evidence Inspector */}

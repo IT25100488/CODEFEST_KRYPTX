@@ -1,0 +1,19 @@
+{
+  "qid": "1b_003",
+  "question": "To which shadowed redoubt must one journey to examine the relic long borne by Cerys Sablewood the Ashen since 356 AS?",
+  "expected_answer": "Gloamreach",
+  "expected_chain": [
+    "Cerys Sablewood the Ashen -> The Cinder-Wrought Aegis",
+    "The Cinder-Wrought Aegis -> Gloamreach"
+  ],
+  "retrieval_method": "agentic_multi_hop",
+  "max_hops": 3,
+  "results_per_query": 5,
+  "max_total_evidence": 20,
+  "hop_1_found": true,
+  "hop_2_found": true,
+  "complete_chain_found": true,
+  "result": "SUCCESS",
+  "failure_category": "SUCCESS",
+  "notes": "Agentic retrieval found evidence that Cerys Sablewood the Ashen had wielded The Cinder-Wrought Aegis since 356 AS and that The Cinder-Wrought Aegis is housed in Gloamreach."
+}

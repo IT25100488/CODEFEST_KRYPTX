@@ -1,6 +1,32 @@
 import json
 
-from src.llm.client import ask_llm
+from llm.client import ask_llm
+
+def parse_llm_json(response):
+    """
+    Parse JSON returned by the LLM,
+    including Markdown fenced JSON.
+    """
+
+    cleaned = response.strip()
+
+    cleaned = cleaned.replace("```json", "")
+    cleaned = cleaned.replace("```", "")
+    cleaned = cleaned.strip()
+
+    start = cleaned.find("{")
+    end = cleaned.rfind("}")
+
+    if start == -1 or end == -1:
+        raise json.JSONDecodeError(
+            "No JSON object found",
+            cleaned,
+            0
+        )
+
+    cleaned = cleaned[start:end + 1]
+
+    return json.loads(cleaned)
 
 
 def build_evidence_context(evidence):
@@ -171,26 +197,25 @@ STRICT GROUNDING RULES
 ANSWER REQUIREMENTS
 ==================================================
 
-Give the final answer first.
+Return ONLY valid JSON in exactly this structure:
 
-Then provide a short explanation showing the supported
-relationship chain.
+{{
+    "answer": "<direct concise answer>",
+    "reasoning": "<short evidence-grounded explanation>",
+    "evidence_ids": [1, 2]
+}}
 
-Use this general format:
+Rules:
 
-Answer:
-<direct answer>
-
-Reasoning:
-<relationship chain supported by evidence>
-
-Sources:
-- <document name>
-- <document name>
-
-Do not expose hidden chain-of-thought or private reasoning.
-
-Only provide a concise explanation based on the evidence.
+- "answer" must contain only the direct answer.
+- "reasoning" must briefly explain the relationship chain.
+- "evidence_ids" must contain the evidence numbers that
+  directly support the answer.
+- Only use evidence numbers that exist in the retrieved evidence.
+- Do NOT write document filenames yourself.
+- Do NOT create a Sources section.
+- Do NOT include markdown code fences.
+- Do NOT expose hidden chain-of-thought.
 
 ==================================================
 FINAL CHECK BEFORE ANSWERING
@@ -221,12 +246,12 @@ def generate_answer(question, evidence):
     """
 
     if not evidence:
-
         return {
             "answer": (
                 "I could not find sufficient evidence in "
                 "the Ashen Era Archive to answer this question."
             ),
+            "reasoning": "",
             "evidence": []
         }
 
@@ -241,7 +266,6 @@ def generate_answer(question, evidence):
     print("=" * 55)
 
     try:
-
         response = ask_llm(
             prompt,
             temperature=0.0
@@ -259,6 +283,7 @@ def generate_answer(question, evidence):
                 "I was unable to generate an answer because "
                 "the language model request failed."
             ),
+            "reasoning": "",
             "evidence": evidence,
             "error": str(error)
         }
@@ -266,22 +291,111 @@ def generate_answer(question, evidence):
     if not response or not response.strip():
 
         return {
-            "answer": (
-                "The language model returned an empty answer."
-            ),
+            "answer": "The language model returned an empty answer.",
+            "reasoning": "",
             "evidence": evidence,
             "error": "Empty LLM response"
         }
 
-    return {
-        "answer": response.strip(),
-        "evidence": evidence
-    }
+    try:
+        parsed = parse_llm_json(response)
+
+        answer = parsed.get(
+            "answer",
+            "I could not determine an answer."
+        )
+
+        reasoning = parsed.get(
+            "reasoning",
+            ""
+        )
+
+        evidence_ids = parsed.get(
+            "evidence_ids",
+            []
+        )
+
+        cited_evidence = []
+
+        for evidence_id in evidence_ids:
+
+            if (
+                isinstance(evidence_id, int)
+                and 1 <= evidence_id <= len(evidence)
+            ):
+                cited_evidence.append(
+                    evidence[evidence_id - 1]
+                )
+
+        return {
+            "answer": answer,
+            "reasoning": reasoning,
+            "evidence": cited_evidence
+        }
+
+    except json.JSONDecodeError:
+
+        print("\nInvalid JSON response. Retrying once...")
+
+        try:
+            retry_response = ask_llm(
+                prompt,
+                temperature=0.0
+            )
+
+            parsed = parse_llm_json(
+                retry_response
+            )
+
+            answer = parsed.get(
+                "answer",
+                "I could not determine an answer."
+            )
+
+            reasoning = parsed.get(
+                "reasoning",
+                ""
+            )
+
+            evidence_ids = parsed.get(
+                "evidence_ids",
+                []
+            )
+
+            cited_evidence = []
+
+            for evidence_id in evidence_ids:
+                if (
+                    isinstance(evidence_id, int)
+                    and 1 <= evidence_id <= len(evidence)
+                ):
+                    cited_evidence.append(
+                        evidence[evidence_id - 1]
+                    )
+
+            return {
+                "answer": answer,
+                "reasoning": reasoning,
+                "evidence": cited_evidence
+            }
+
+        except Exception as retry_error:
+
+            return {
+                "answer": (
+                    "I could not generate a reliable answer "
+                    "from the available evidence."
+                ),
+                "reasoning": "",
+                "evidence": evidence,
+                "error": str(retry_error)
+            }
 
 
 def print_answer(result):
     """
-    Print the generated answer and supporting evidence.
+    Print the generated answer, reasoning,
+    and supporting evidence.
     """
 
     print("\n")
@@ -289,8 +403,22 @@ def print_answer(result):
     print("                 FINAL ANSWER")
     print("=" * 60)
 
-    print("\n")
-    print(result.get("answer", ""))
+    print("\nAnswer:")
+    print(
+        result.get(
+            "answer",
+            ""
+        )
+    )
+
+    reasoning = result.get(
+        "reasoning",
+        ""
+    )
+
+    if reasoning:
+        print("\nReasoning:")
+        print(reasoning)
 
     evidence = result.get(
         "evidence",
@@ -306,7 +434,6 @@ def print_answer(result):
         evidence,
         start=1
     ):
-
         print(f"\n[{index}]")
 
         print(
@@ -323,36 +450,3 @@ def print_answer(result):
             "Chunk:",
             item.get("chunk_id")
         )
-
-
-if __name__ == "__main__":
-
-    print("\n")
-    print("=" * 60)
-    print("              ANSWER GENERATOR TEST")
-    print("=" * 60)
-
-    test_question = input(
-        "\nEnter a question: "
-    )
-
-    test_evidence = [
-        {
-            "filename": "test_document.txt",
-            "source_folder": "test",
-            "chunk_id": "TEST_001",
-            "text": (
-                "This is a test evidence passage from "
-                "the Ashen Era Archive."
-            )
-        }
-    ]
-
-    result = generate_answer(
-        test_question,
-        test_evidence
-    )
-
-    print_answer(
-        result
-    )

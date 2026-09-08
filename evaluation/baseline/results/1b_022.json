@@ -1,0 +1,23 @@
+{
+  "qid": "1b_022",
+  "baseline_query": "Which war did Ravena Stormwell's own faction ultimately win?",
+  "top_k": 5,
+
+  "retrieval_observation": {
+    "hop_1": {
+      "relationship": "Ravena Stormwell -> The Silent Choir",
+      "found_in_top_k": false
+    },
+
+    "hop_2": {
+      "relationship": "The Silent Choir -> The War of Drowned Light",
+      "found_in_top_k": true
+    }
+  },
+
+  "complete_chain_found": false,
+  "result": "PARTIAL",
+  "failure_category": "FIRST_HOP_MISS",
+
+  "notes": "The original full-question retrieval surfaced wars and victor relationships, including The Silent Choir winning The War of Drowned Light, but did not retrieve evidence linking Ravena Stormwell to The Silent Choir within the top 5 results."
+}

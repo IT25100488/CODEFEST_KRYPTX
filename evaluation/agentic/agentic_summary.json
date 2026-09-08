@@ -1,0 +1,12 @@
+{
+  "track": "1B",
+  "retrieval_method": "agentic_multi_hop",
+  "total_questions": 7,
+  "complete_chain_successes": 6,
+  "partial_retrievals": 1,
+  "complete_chain_retrieval_rate": 85.71,
+  "failure_categories": {
+    "SUCCESS": 6,
+    "FIRST_HOP_MISS": 1
+  }
+}

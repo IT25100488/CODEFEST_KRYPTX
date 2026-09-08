@@ -1,0 +1,12 @@
+{
+  "track": "1B",
+  "total_questions": 7,
+  "complete_chain_successes": 1,
+  "partial_retrievals": 6,
+  "complete_chain_retrieval_rate": 14.29,
+  "failure_categories": {
+    "SECOND_HOP_MISS": 3,
+    "FIRST_HOP_MISS": 3,
+    "SUCCESS": 1
+  }
+}

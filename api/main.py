@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from src.rag.pipeline import run_rag_pipeline
+from rag.pipeline import run_rag_pipeline
 
 
 # ---------------------------------------------------------

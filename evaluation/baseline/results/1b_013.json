@@ -1,0 +1,23 @@
+{
+  "qid": "1b_013",
+  "baseline_query": "Whose dominion encompasses the lair of the Gravemaw Wyrm?",
+  "top_k": 5,
+
+  "retrieval_observation": {
+    "hop_1": {
+      "relationship": "Gravemaw Wyrm -> Marrowwell Abbey",
+      "found_in_top_k": true
+    },
+
+    "hop_2": {
+      "relationship": "Marrowwell Abbey -> The Bleeding Crown",
+      "found_in_top_k": false
+    }
+  },
+
+  "complete_chain_found": false,
+  "result": "PARTIAL",
+  "failure_category": "SECOND_HOP_MISS",
+
+  "notes": "The original full-question retrieval correctly identified Marrowwell Abbey as the Gravemaw Wyrm's lair, but did not retrieve evidence identifying The Bleeding Crown as the ruling power within the top 5 results."
+}

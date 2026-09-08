@@ -1,12 +1,12 @@
-from src.retrieval.agentic_multi_hop import (
+from retrieval.agentic_multi_hop import (
     agentic_multi_hop_retrieve
 )
 
-from src.retrieval.evidence_ranker import (
+from retrieval.evidence_ranker import (
     rank_evidence
 )
 
-from src.rag.answer_generator import (
+from rag.answer_generator import (
     generate_answer,
     print_answer
 )

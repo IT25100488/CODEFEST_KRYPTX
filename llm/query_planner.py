@@ -1,7 +1,7 @@
 import json
 import re
 
-from src.llm.client import ask_llm
+from llm.client import ask_llm
 
 
 MAX_FOLLOW_UP_QUERIES = 3
@@ -118,11 +118,37 @@ IMPORTANT RULES:
 3. Maximum 3 queries.
 4. Do not repeat the original question.
 5. Do not invent entities.
-6. Use entities actually supported by the evidence.
-7. Queries must be useful for archive retrieval.
-8. If no additional search is necessary, return [].
-9. Do not include markdown.
-10. Do not include explanations.
+6. You may use entities explicitly present in the original
+   question OR entities explicitly supported by the retrieved
+   evidence.
+
+7. If the evidence reveals an intermediate entity, use that
+   entity to search for the NEXT relationship required by the
+   original question.
+
+For example:
+
+Question:
+"Which accord was won by the faction of which Person A
+is a member?"
+
+Evidence:
+"Person A is a member of The Iron-Ring Cartel."
+
+Useful next searches would be:
+
+[
+  "The Iron-Ring Cartel accord",
+  "The Iron-Ring Cartel victory",
+  "The Iron-Ring Cartel won accord"
+]
+
+Do not keep searching only for Person A once the person's
+faction has already been established.
+8. Queries must be useful for archive retrieval.
+9. If no additional search is necessary, return [].
+10. Do not include markdown.
+11. Do not include explanations.
 
 Return ONLY something like:
 
@@ -257,24 +283,80 @@ def clean_queries(
         :MAX_FOLLOW_UP_QUERIES
     ]
 
-
-def deterministic_fallback(
-    question,
-    evidence
-):
+def deterministic_fallback(question, evidence):
     """
-    Backup strategy if the LLM returns no usable
-    follow-up queries.
+    Deterministic backup query planner.
 
-    Extract likely named entities from retrieved
-    evidence and create additional searches.
+    Priority:
+    1. Search entities from the original question if they
+       have not yet appeared in retrieved evidence.
+    2. Once a question entity is found, search newly
+       discovered entities connected to it.
     """
 
-    question_lower = (
-        question.lower()
+    question_lower = question.lower()
+
+    entity_pattern = (
+        r"\b[A-Z][A-Za-z'-]*"
+        r"(?:\s+[A-Z][A-Za-z'-]*){1,4}\b"
     )
 
-    entities = []
+    # ---------------------------------------------
+    # Extract named entities from original question
+    # ---------------------------------------------
+
+    question_entities = []
+
+    for entity in re.findall(entity_pattern, question):
+        entity = entity.strip()
+
+        if entity not in question_entities:
+            question_entities.append(entity)
+
+    # ---------------------------------------------
+    # Check whether question entities have already
+    # appeared in retrieved evidence.
+    # ---------------------------------------------
+
+    combined_evidence_text = " ".join(
+        item.get("text", "")
+        for item in evidence
+    )
+
+    missing_question_entities = [
+        entity
+        for entity in question_entities
+        if entity.lower() not in combined_evidence_text.lower()
+    ]
+
+    # If the main named entity has not even been found,
+    # search for it directly first.
+    if missing_question_entities:
+
+        queries = []
+
+        for entity in missing_question_entities:
+
+            if entity.lower() not in [
+                "which accord",
+                "which war",
+                "the war",
+                "the faction"
+            ]:
+                queries.append(entity)
+
+            if len(queries) >= MAX_FOLLOW_UP_QUERIES:
+                break
+
+        if queries:
+            return queries
+
+    # ---------------------------------------------
+    # Find entities appearing in evidence chunks
+    # that mention one of the question entities.
+    # ---------------------------------------------
+
+    linked_entities = []
 
     for item in evidence:
 
@@ -283,51 +365,91 @@ def deterministic_fallback(
             ""
         )
 
-        # Find capitalized multi-word names.
-        matches = re.findall(
-            r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,4}\b",
+        contains_question_entity = any(
+            entity.lower() in text.lower()
+            for entity in question_entities
+        )
+
+        if not contains_question_entity:
+            continue
+
+        found_entities = re.findall(
+            entity_pattern,
             text
         )
 
-        for entity in matches:
+        for entity in found_entities:
 
             entity = entity.strip()
 
-            if len(entity) < 4:
-                continue
-
-            # Ignore entities already explicitly
-            # present in the question.
+            # Don't repeat original question entities.
             if entity.lower() in question_lower:
                 continue
 
-            if entity not in entities:
-                entities.append(entity)
+            if entity not in linked_entities:
+                linked_entities.append(entity)
+
+    # ---------------------------------------------
+    # Important target relationships from question
+    # ---------------------------------------------
+
+    relationship_terms = []
+
+    target_keywords = [
+        "accord",
+        "war",
+        "victory",
+        "victor",
+        "won",
+        "dominion",
+        "lair",
+        "relic",
+        "redoubt",
+        "location",
+        "housed"
+    ]
+
+    for keyword in target_keywords:
+
+        if keyword in question_lower:
+            relationship_terms.append(keyword)
+
+    # ---------------------------------------------
+    # Build searches around newly discovered entities
+    # ---------------------------------------------
 
     queries = []
 
-    # Create searches around discovered entities.
-    for entity in entities:
+    for entity in linked_entities:
 
-        query = entity
+        for term in relationship_terms:
 
-        if query.lower() not in [
-            existing.lower()
-            for existing in queries
-        ]:
+            query = f"{entity} {term}"
 
-            queries.append(query)
+            if query.lower() not in [
+                existing.lower()
+                for existing in queries
+            ]:
+                queries.append(query)
 
-        if len(queries) >= MAX_FOLLOW_UP_QUERIES:
-            break
+            if len(queries) >= MAX_FOLLOW_UP_QUERIES:
+                return queries
+
+    # If no relationship keyword was detected,
+    # search discovered entities directly.
+    if not queries:
+
+        for entity in linked_entities:
+
+            queries.append(entity)
+
+            if len(queries) >= MAX_FOLLOW_UP_QUERIES:
+                break
 
     return queries
 
 
-def plan_follow_up_queries(
-    question,
-    evidence
-):
+def plan_follow_up_queries(question, evidence):
     """
     Main query-planning function.
 
@@ -392,10 +514,6 @@ def plan_follow_up_queries(
 
         print(error)
 
-    # ---------------------------------------------
-    # Fallback
-    # ---------------------------------------------
-
     print(
         "\nLLM planner returned no usable queries."
     )
@@ -427,6 +545,7 @@ def plan_follow_up_queries(
         )
 
     return fallback_queries
+
 
 
 if __name__ == "__main__":

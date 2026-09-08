@@ -1,0 +1,19 @@
+{
+  "qid": "1b_007",
+  "question": "Which accord was ultimately won by the faction of which Ederon Fellgard is a member?",
+  "expected_answer": "The Leaden Accord",
+  "expected_chain": [
+    "Ederon Fellgard -> The Iron-Ring Cartel",
+    "The Iron-Ring Cartel -> The Leaden Accord"
+  ],
+  "retrieval_method": "agentic_multi_hop",
+  "max_hops": 3,
+  "results_per_query": 5,
+  "max_total_evidence": 20,
+  "hop_1_found": false,
+  "hop_2_found": true,
+  "complete_chain_found": false,
+  "result": "PARTIAL",
+  "failure_category": "FIRST_HOP_MISS",
+  "notes": "Agentic retrieval successfully found evidence that The Iron-Ring Cartel was the declared victor of The Leaden Accord, but the final evidence did not contain the required membership relation between Ederon Fellgard and The Iron-Ring Cartel."
+}

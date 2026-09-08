@@ -1,0 +1,264 @@
+{
+  "1b_007": {
+    "question": "Which accord was ultimately won by the faction of which Ederon Fellgard is a member?",
+
+    "required_hops": [
+      "Ederon Fellgard -> The Iron-Ring Cartel",
+      "The Iron-Ring Cartel -> The Leaden Accord"
+    ],
+
+    "manual_verification": {
+      "hop_1": {
+        "query": "Ederon Fellgard faction membership",
+        "result": "The Iron-Ring Cartel",
+        "verified": true,
+        "evidence_sources": [
+          "ederon_fellgard.md",
+          "the_annals_of_the_ashen_era.docx",
+          "the_annals_of_the_ashen_era.pdf"
+        ]
+      },
+
+      "hop_2": {
+        "query": "The Iron-Ring Cartel accord won",
+        "result": "The Leaden Accord",
+        "verified": true,
+        "evidence_sources": [
+          "the_annals_of_the_ashen_era.docx",
+          "the_annals_of_the_ashen_era.pdf",
+          "the_iron_ring_cartel.md"
+        ]
+      }
+    },
+
+    "expected_answer": "The Leaden Accord",
+    "status": "verified"
+  },
+
+  "1b_006": {
+    "question": "Which individual was a member of the faction that ultimately won the War of Drowned Light?",
+
+    "required_hops": [
+      "The War of Drowned Light -> The Silent Choir",
+      "The Silent Choir -> member individual"
+    ],
+
+    "manual_verification": {
+      "hop_1": {
+        "query": "Which individual was a member of the faction that ultimately won the War of Drowned Light?",
+        "result": "The Silent Choir",
+        "verified": true,
+        "evidence_sources": [
+          "the_war_of_drowned_light.md",
+          "the_annals_of_the_ashen_era.docx",
+          "the_annals_of_the_ashen_era.pdf"
+        ]
+      },
+
+      "hop_2": {
+        "query": "The Silent Choir member individual",
+        "result": [
+          "Ignatz Fellgard",
+          "Brannoc Palefroth",
+          "Thessaly Coldwater",
+          "Lucan Hollowmere",
+          "Tamsin Greyfen",
+          "Ossric Ashgrove"
+        ],
+        "verified": true,
+        "evidence_sources": [
+          "the_silent_choir.md"
+        ]
+      }
+    },
+
+    "expected_answer": [
+      "Ignatz Fellgard",
+      "Brannoc Palefroth",
+      "Thessaly Coldwater",
+      "Lucan Hollowmere",
+      "Tamsin Greyfen",
+      "Ossric Ashgrove"
+    ],
+
+    "status": "verified"
+  }, 
+    
+ 
+    "1b_013": {
+  "question": "Whose dominion encompasses the lair of the Gravemaw Wyrm?",
+
+  "required_hops": [
+    "Gravemaw Wyrm -> Marrowwell Abbey",
+    "Marrowwell Abbey -> The Bleeding Crown"
+  ],
+
+  "manual_verification": {
+    "hop_1": {
+      "query": "Whose dominion encompasses the lair of the Gravemaw Wyrm?",
+      "result": "Marrowwell Abbey",
+      "verified": true,
+      "evidence_sources": [
+        "gravemaw_wyrm.md",
+        "codex_vaeloria_ii_armory_of_relics_and_bestiary.pdf"
+      ]
+    },
+
+    "hop_2": {
+      "query": "Marrowwell Abbey dominion ruler",
+      "result": "The Bleeding Crown",
+      "verified": true,
+      "evidence_sources": [
+        "marrowwell_abbey.md",
+        "codex_vaeloria_i_gazetteer_of_the_sundered_realms.docx",
+        "codex_vaeloria_i_gazetteer_of_the_sundered_realms.pdf"
+      ]
+    }
+  },
+
+  "expected_answer": "The Bleeding Crown",
+  "status": "verified"
+ },
+   "1b_005": {
+  "question": "Which war was won by the organization that included Isolde Mournvale as one of its members?",
+
+  "required_hops": [
+    "Isolde Mournvale -> The Silent Choir",
+    "The Silent Choir -> The War of Drowned Light"
+  ],
+
+  "manual_verification": {
+    "hop_1": {
+      "query": "Isolde Mournvale faction membership",
+      "result": "The Silent Choir",
+      "verified": true,
+      "evidence_sources": [
+        "isolde_mournvale.md",
+        "the_annals_of_the_ashen_era.pdf",
+        "the_annals_of_the_ashen_era.docx"
+      ]
+    },
+
+    "hop_2": {
+      "query": "The Silent Choir war won",
+      "result": "The War of Drowned Light",
+      "verified": true,
+      "evidence_sources": [
+        "the_annals_of_the_ashen_era.pdf",
+        "the_annals_of_the_ashen_era.docx",
+        "the_ashen_chronicles_volume_i_the_kindling_years.pdf"
+      ]
+    }
+  },
+
+  "expected_answer": "The War of Drowned Light",
+  "status": "verified"
+ },
+    "1b_009": {
+  "question": "In what way is Halvard Crowhurst connected to the victors of the Purge of Blackport?",
+
+  "required_hops": [
+    "Halvard Crowhurst -> The Iron-Ring Cartel",
+    "The Purge of Blackport -> The Iron-Ring Cartel"
+  ],
+
+  "manual_verification": {
+    "hop_1": {
+      "query": "In what way is Halvard Crowhurst connected to the victors of the Purge of Blackport?",
+      "result": "The Iron-Ring Cartel",
+      "verified": true,
+      "evidence_sources": [
+        "the_annals_of_the_ashen_era.docx"
+      ]
+    },
+
+    "hop_2": {
+      "query": "The Purge of Blackport victor",
+      "result": "The Iron-Ring Cartel",
+      "verified": true,
+      "evidence_sources": [
+        "the_purge_of_blackport.md",
+        "the_annals_of_the_ashen_era.pdf",
+        "the_annals_of_the_ashen_era.docx"
+      ]
+    }
+  },
+
+  "expected_answer": "Halvard Crowhurst is a member of The Iron-Ring Cartel, the faction that won the Purge of Blackport.",
+  "status": "verified"
+  },
+
+
+    "1b_003": {
+  "question": "To which shadowed redoubt must one journey to examine the relic long borne by Cerys Sablewood the Ashen since 356 AS?",
+
+  "required_hops": [
+    "Cerys Sablewood the Ashen -> The Cinder-Wrought Aegis",
+    "The Cinder-Wrought Aegis -> Gloamreach"
+  ],
+
+  "manual_verification": {
+    "hop_1": {
+      "query": "To which shadowed redoubt must one journey to examine the relic long borne by Cerys Sablewood the Ashen since 356 AS?",
+      "result": "The Cinder-Wrought Aegis",
+      "verified": true,
+      "evidence_sources": [
+        "the_ashen_chronicles_volume_ii_the_long_reprisal.pdf",
+        "the_ashen_chronicles_volume_ii_the_long_reprisal.docx"
+      ]
+    },
+
+    "hop_2": {
+      "query": "The Cinder-Wrought Aegis current location housed",
+      "result": "Gloamreach",
+      "verified": true,
+      "evidence_sources": [
+        "the_cinder_wrought_aegis.md",
+        "codex_vaeloria_ii_armory_of_relics_and_bestiary.docx",
+        "codex_vaeloria_ii_armory_of_relics_and_bestiary.pdf"
+      ]
+    }
+  },
+
+  "expected_answer": "Gloamreach",
+  "status": "verified"
+ }, 
+   
+  "1b_022": {
+  "question": "Which war did Ravena Stormwell's own faction ultimately win?",
+
+  "required_hops": [
+    "Ravena Stormwell -> The Silent Choir",
+    "The Silent Choir -> The War of Drowned Light"
+  ],
+
+  "manual_verification": {
+    "hop_1": {
+      "query": "Ravena Stormwell faction membership",
+      "result": "The Silent Choir",
+      "verified": true,
+      "evidence_sources": [
+        "ravena_stormwell.md",
+        "the_annals_of_the_ashen_era.docx",
+        "the_annals_of_the_ashen_era.pdf"
+      ]
+    },
+
+    "hop_2": {
+      "query": "The Silent Choir war won",
+      "result": "The War of Drowned Light",
+      "verified": true,
+      "evidence_sources": [
+        "the_annals_of_the_ashen_era.docx",
+        "the_annals_of_the_ashen_era.pdf",
+        "the_ashen_chronicles_volume_i_the_kindling_years.pdf"
+      ]
+    }
+  },
+
+  "expected_answer": "The War of Drowned Light",
+  "status": "verified"
+ }
+
+}
+ 

@@ -1,5 +1,5 @@
-from src.data_pipeline.retriever import retrieve
-from src.llm.query_planner import plan_follow_up_queries
+from data_pipeline.retriever import retrieve
+from llm.query_planner import plan_follow_up_queries
 
 
 MAX_HOPS = 3

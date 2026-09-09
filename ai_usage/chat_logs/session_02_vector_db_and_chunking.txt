@@ -1,0 +1,25 @@
+================================================================================
+SLIIT CODEFEST 2026 - AI INTERACTION LOG
+Topic: Chunking Strategy, Voyage AI, and Local Vector DB
+Participant: Team KRYPTX
+AI Tool: Claude / ChatGPT Assistant
+Date: September 2, 2026
+================================================================================
+
+[USER]
+Our documents contain markdown files, extracted PDF texts, and codex tables.
+What chunk size and overlap should we use? Also, should we use Pinecone or ChromaDB?
+
+[AI ASSISTANT]
+For the Ashen Era Archive:
+1. Chunk Size: In multi-hop historical documents, individual sections or registry entries are typically 1,500 to 3,000 characters. A chunk size of 2,500 characters with 300 character overlap preserves context around character affiliations and treaty conditions.
+2. Vector DB: Use ChromaDB locally (`PersistentClient`).
+Reason: The judges must be able to clone and run the repo locally from scratch. Pinecone requires judges to set up their own index and API credentials. ChromaDB runs embedded in Python with zero external infrastructure.
+3. Embeddings: Voyage AI (`voyage-3` or `voyage-4-large`) is recommended by the competition rules. Voyage embeddings excel at specialized technical and named-entity domains.
+
+[USER]
+Should we embed the whole chunk or prepended metadata?
+
+[AI ASSISTANT]
+Prepend document title and section headers to each chunk before embedding. This anchors the embedding in the document topic even if the passage itself only mentions pronouns or generic descriptions.
+================================================================================

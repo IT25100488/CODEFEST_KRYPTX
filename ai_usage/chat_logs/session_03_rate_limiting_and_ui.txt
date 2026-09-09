@@ -1,0 +1,33 @@
+================================================================================
+SLIIT CODEFEST 2026 - AI INTERACTION LOG
+Topic: Rate Limiting, Exponential Backoff, and UI Citations
+Participant: Team KRYPTX
+AI Tool: Claude / ChatGPT Assistant
+Date: September 6, 2026
+================================================================================
+
+[USER]
+During testing on OpenRouter free tier, we occasionally hit HTTP 429 rate limits or empty responses during answer generation. The challenge document warns that systems without retry will fail unpredictably.
+How should we structure retry logic?
+
+[AI ASSISTANT]
+Implement exponential backoff retry in `llm/client.py`:
+- Catch API rate limits (429), timeouts, and temporary server errors (500/503).
+- Retry with delay doubling: 1s, 2s, 4s, 8s, up to 5 attempts.
+- Do the same for Voyage AI embedding calls in `data_pipeline/retriever.py`.
+- Also ensure Next.js API route proxy has an extended timeout (e.g. 180s) so it doesn't abort while waiting for multi-hop synthesis.
+
+[USER]
+For source citations, how do we prevent the LLM from hallucinating document names in the frontend?
+
+[AI ASSISTANT]
+Do NOT let the LLM write document filenames in markdown.
+Instead:
+1. Pass numeric IDs to the LLM (e.g., EVIDENCE 1, EVIDENCE 2).
+2. Ask the LLM to return `evidence_ids: [1, 2]`.
+3. In python, map those numeric IDs back to your verified database chunk metadata (filename, chunk_id, score, text snippet).
+4. Return this metadata array to the frontend so the UI can render interactive citation badges and clickable source preview drawers. This guarantees 100% citation accuracy.
+
+[USER]
+Great idea. That completely eliminates phantom file citations.
+================================================================================

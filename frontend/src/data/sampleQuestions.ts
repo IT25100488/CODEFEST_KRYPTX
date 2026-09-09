@@ -35,11 +35,9 @@ export const MOCK_RESPONSES: Record<string, Partial<ChatMessage>> = {
   q1: {
     content: `**The Leaden Accord**
 
-Based on verified multi-hop connections across the Ashen Era Archive:
-1. **Membership Identification**: Official records in the Annals and character registries establish that **Ederon Fellgard** serves as a Sapper at Greyfell Citadel and holds canonical membership in **The Iron-Ring Cartel**.
-2. **Conflict Resolution**: The treaty records confirm that **The Iron-Ring Cartel** was the declared and recognized victor of **The Leaden Accord**.
+The accord ultimately won by the faction of which Ederon Fellgard is a member is **The Leaden Accord**.
 
-Therefore, the accord won by Ederon Fellgard's faction is unequivocally **The Leaden Accord**.`,
+Official registry records in the Annals confirm that **Ederon Fellgard** serves as a Sapper at Greyfell Citadel and is an established member of **The Iron-Ring Cartel**. Following the protracted regional disputes of the Ashen Era, diplomatic treaty documentation formally recognizes **The Iron-Ring Cartel** as the victorious faction of **The Leaden Accord**.`,
     reasoning: `Hop 1: Query matched character registry entry for 'Ederon Fellgard' in 'the_annals_of_the_ashen_era.pdf' & 'ederon_fellgard.md' → Extracted faction: 'The Iron-Ring Cartel'.
 Hop 2: Query matched treaty records for 'The Leaden Accord' in 'the_leaden_accord.md' → Verified victor organization: 'The Iron-Ring Cartel'.
 Hop 3: Synthesized relationship chain (Ederon Fellgard → The Iron-Ring Cartel → Victor of The Leaden Accord).`,
@@ -78,12 +76,38 @@ Hop 3: Synthesized relationship chain (Ederon Fellgard → The Iron-Ring Cartel 
       }
     ]
   },
+  q2: {
+    content: `**The Dispute over the Ironfell Tithes**
+
+The event that led to the political conflict between House Morvain and the Ashen Vanguard at Ironfell Citadel was **The Dispute over the Ironfell Tithes**.
+
+Archival records indicate that severe friction erupted following the Siege of Fenspire regarding disputed grain levies and jurisdictional authority at Ironfell Citadel, rupturing relations between House Morvain and the Ashen Vanguard.`,
+    reasoning: `Hop 1: House Morvain & Ashen Vanguard conflict at Ironfell Citadel → caused by dispute over grain levies/tithes.`,
+    sources: [
+      {
+        document: 'ironfell_citadel.md',
+        chunk: 'DOC_000185_CHUNK_0002',
+        source_folder: 'wiki',
+        relative_path: 'wiki/ironfell_citadel.md',
+        evidence_score: 128.4,
+        text: 'Ironfell Citadel: The political schism between House Morvain and the Ashen Vanguard escalated into open dispute over the Ironfell Tithes following winter grain requisitions.'
+      },
+      {
+        document: 'the_ashen_vanguard.md',
+        chunk: 'DOC_000195_CHUNK_0001',
+        source_folder: 'wiki',
+        relative_path: 'wiki/the_ashen_vanguard.md',
+        evidence_score: 115.2,
+        text: 'Relations between the Ashen Vanguard and House Morvain collapsed during the Dispute over the Ironfell Tithes.'
+      }
+    ]
+  },
   q3: {
     content: `**Proscribed Blood-Rites**
 
-Archival records in the Annals registry indicate that **Gareth Ironmere**, who has commanded Marrowwell Abbey since 322 AS and belongs to **The Bleeding Crown**, secretly practices **proscribed blood-rites**.
+The secret practice recorded to be observed by Gareth Ironmere while commanding Marrowwell Abbey is **proscribed blood-rites**.
 
-This devotional offense is maintained as a concealed classification distinct from his sanctioned duties as Executioner.`,
+Archival records in the Annals registry indicate that **Gareth Ironmere**, who has commanded Marrowwell Abbey since 322 AS on behalf of **The Bleeding Crown**, secretly practices proscribed blood-rites as a devotional offense distinct from his sanctioned duties as Executioner.`,
     reasoning: `Hop 1: Queried registry for 'Gareth Ironmere' command and clandestine activities in 'the_annals_of_the_ashen_era.pdf' → Found classified notation 'secretly practices proscribed blood-rites' at Marrowwell Abbey.`,
     sources: [
       {
@@ -93,6 +117,40 @@ This devotional offense is maintained as a concealed classification distinct fro
         relative_path: 'codex/the_annals_of_the_ashen_era.pdf',
         evidence_score: 112.42,
         text: 'Gareth Ironmere: Executioner, Born 300 AS. Affiliation: The Bleeding Crown. Command: Marrowwell Abbey, since 322 AS. Concealed practice: secretly practices proscribed blood-rites.'
+      },
+      {
+        document: 'marrowwell_abbey.md',
+        chunk: 'DOC_000190_CHUNK_0002',
+        source_folder: 'wiki',
+        relative_path: 'wiki/marrowwell_abbey.md',
+        evidence_score: 98.7,
+        text: 'Commander Gareth Ironmere oversaw operations at Marrowwell Abbey under sovereign charter from The Bleeding Crown.'
+      }
+    ]
+  },
+  q4: {
+    content: `**The Ashen Vanguard**
+
+The faction that guarded the Cinder-Wrought Aegis prior to the Siege of Fenspire is **The Ashen Vanguard**.
+
+Historical chronologies and armory manifests record that elite units of **The Ashen Vanguard** held protective custody of the **Cinder-Wrought Aegis** at the Sunken Bastion prior to the outbreak of the Siege of Fenspire.`,
+    reasoning: `Hop 1: Cinder-Wrought Aegis guarded prior to Siege of Fenspire → The Ashen Vanguard.`,
+    sources: [
+      {
+        document: 'the_cinder_wrought_aegis.md',
+        chunk: 'DOC_000180_CHUNK_0001',
+        source_folder: 'wiki',
+        relative_path: 'wiki/the_cinder_wrought_aegis.md',
+        evidence_score: 135.0,
+        text: 'The Cinder-Wrought Aegis was held by the garrison of The Ashen Vanguard stationed at the Sunken Bastion prior to the Siege of Fenspire.'
+      },
+      {
+        document: 'the_ashen_vanguard.md',
+        chunk: 'DOC_000195_CHUNK_0003',
+        source_folder: 'wiki',
+        relative_path: 'wiki/the_ashen_vanguard.md',
+        evidence_score: 122.5,
+        text: 'The vanguard garrison was entrusted with the defense of sacred regalia, notably safeguarding the Cinder-Wrought Aegis before the fortress fell.'
       }
     ]
   }

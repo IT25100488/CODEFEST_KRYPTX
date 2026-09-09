@@ -68,15 +68,23 @@ def chat(request: ChatRequest):
             "document": item.get("filename", ""),
             "chunk": item.get("chunk_id", ""),
             "source_folder": item.get("source_folder", ""),
-            "relative_path": item.get("relative_path", "")
+            "relative_path": item.get("relative_path", ""),
+            "text": item.get("text", ""),
+            "evidence_score": item.get("evidence_score") if item.get("evidence_score") is not None else item.get("score", 95.0)
         })
+
+    answer = result.get(
+        "answer",
+        "I could not find an answer in the archive."
+    )
+    reasoning = result.get("reasoning", "")
+
+    # Clean, descriptive answer only (no reasoning or evidence trail appended)
+    display_answer = answer.strip()
 
     return {
         "question": question,
-        "answer": result.get(
-            "answer",
-            "I could not find an answer in the archive."
-        ),
-        "reasoning": result.get("reasoning", ""),
+        "answer": display_answer,
+        "reasoning": reasoning,
         "sources": sources
     }

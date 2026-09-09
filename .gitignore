@@ -1,8 +1,33 @@
+# Virtual environments
 venv/
 .venv/
 .venu/
-.vscode/
+env/
+ENV/
+
+# Python cache and bytecode
 __pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment variables
 .env
+.env.local
+
+# Database and vector storage
 data/vector_db/
 data/test_chroma/
+
+# Node / Frontend
+frontend/.next/
+frontend/node_modules/
+frontend/next-env.d.ts
+*.log
+

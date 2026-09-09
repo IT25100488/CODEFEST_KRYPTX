@@ -9,9 +9,9 @@ from docx import Document
 # CONFIGURATION
 # ============================================================
 
-DATASET_PATH = Path(
-    "data/Ashen_Era_Archive/Ashen_Era_Archive"
-)
+DATASET_PATH = Path("data/Ashen_Era_Archive")
+if (DATASET_PATH / "Ashen_Era_Archive").exists():
+    DATASET_PATH = DATASET_PATH / "Ashen_Era_Archive"
 
 OUTPUT_PATH = Path(
     "data/processed/extracted_documents.json"

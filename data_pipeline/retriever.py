@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import chromadb
 import voyageai
 from dotenv import load_dotenv
@@ -8,7 +9,8 @@ from dotenv import load_dotenv
 # CONFIGURATION
 # ============================================================
 
-VECTOR_DB_PATH = "data/vector_db"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+VECTOR_DB_PATH = str(PROJECT_ROOT / "data" / "vector_db")
 
 COLLECTION_NAME = "ashen_era_archive"
 
@@ -95,16 +97,28 @@ def retrieve(
 
     # --------------------------------------------------------
     # STEP 1
-    # Convert the user's question into an embedding
+    # Convert the user's question into an embedding with retry
     # --------------------------------------------------------
 
-    embedding_result = voyage_client.embed(
-        [question],
-        model=EMBEDDING_MODEL,
-        input_type="query"
-    )
+    import time
+    max_embed_retries = 4
+    embed_delay = 1.0
 
-    question_embedding = embedding_result.embeddings[0]
+    for embed_attempt in range(1, max_embed_retries + 1):
+        try:
+            embedding_result = voyage_client.embed(
+                [question],
+                model=EMBEDDING_MODEL,
+                input_type="query"
+            )
+            question_embedding = embedding_result.embeddings[0]
+            break
+        except Exception as embed_err:
+            if embed_attempt == max_embed_retries:
+                raise embed_err
+            print(f"[Warning] Voyage AI embed failed (attempt {embed_attempt}/{max_embed_retries}): {embed_err}. Retrying in {embed_delay}s...")
+            time.sleep(embed_delay)
+            embed_delay *= 2
 
 
     # --------------------------------------------------------

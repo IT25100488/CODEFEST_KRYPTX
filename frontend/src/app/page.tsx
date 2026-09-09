@@ -244,7 +244,7 @@ export default function Home() {
 
       if (!response.ok) {
         const errorContent = data.isOffline
-          ? `⚠️ **FastAPI backend is not running yet.**\n\nTo connect live: run \`start_app.bat\` or \`uvicorn src.api:app --reload\`.\n\nTip: You can switch to **"Demo Mode"** (top right) to test verified responses immediately.`
+          ? `⚠️ **FastAPI backend is not running yet.**\n\nTo connect live: run \`start_app.bat\` or \`uvicorn api.main:app --reload\`.\n\nTip: You can switch to **"Demo Mode"** (top right) to test verified responses immediately.`
           : `⚠️ **Notice**: ${data.error || 'Failed to generate response.'}`;
 
         const errorMessage: ChatMessage = {

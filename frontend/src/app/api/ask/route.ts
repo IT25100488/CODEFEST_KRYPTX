@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 
 const BACKEND_URL = process.env.BACKEND_API_URL || 'http://127.0.0.1:8000';
 
+export const maxDuration = 180;
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -20,8 +22,8 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ question: question.trim() }),
-      // Optional timeout
-      signal: AbortSignal.timeout(45000),
+      // Generous timeout (3 minutes) for agentic multi-hop retrieval and answer synthesis
+      signal: AbortSignal.timeout(180000),
     });
 
     if (!response.ok) {

@@ -1,0 +1,41 @@
+================================================================================
+SLIIT CODEFEST 2026 - AI INTERACTION LOG
+Topic: Architecture Planning & Multi-Hop Retrieval for Track 1B
+Participant: Team KRYPTX
+AI Tool: Claude / ChatGPT Assistant
+Date: August 29, 2026
+================================================================================
+
+[USER]
+We are competing in SLIIT Codefest 2026, Track 1B: "Connecting Facts Across Thousands of Pages".
+The corpus is the Ashen Era Archive (415 documents, ~1277 pages).
+When we run standard top-k similarity search on questions like "Which accord was ultimately won by the faction of which Ederon Fellgard is a member?", the top retrieved chunks give us Ederon Fellgard's role as a sapper and his cartel membership, but none of the top chunks mention the accord or who won it.
+How do we solve this?
+
+[AI ASSISTANT]
+This is the classic multi-hop RAG challenge. In Track 1B, the query and the ultimate answer are separated by an intermediate entity:
+Entity 1: Ederon Fellgard -> [Affiliation] -> The Iron-Ring Cartel
+Entity 2: The Iron-Ring Cartel -> [Victor of] -> The Leaden Accord
+
+In single-pass dense retrieval, the initial query embedding has high semantic overlap with "Ederon Fellgard" documents, but zero semantic overlap with "The Leaden Accord" treaty documents. Therefore, "The Leaden Accord" documents will rank low in the vector search.
+
+Recommended approaches:
+1. Agentic Multi-Hop Retrieval: Use an iterative loop. Step 1 retrieves candidates for the initial query. An LLM query planner inspects the extracted chunks, identifies candidate entities (like "The Iron-Ring Cartel"), and formulates targeted follow-up queries.
+2. Graph-Augmented RAG: Extract an entity graph.
+Given your timeline, Agentic Multi-Hop with an LLM Query Planner is the most practical and robust choice.
+
+[USER]
+We tried expanding queries naively, but the LLM generates conversational queries like "Tell me more about the cartel". Vector search returns junk.
+How should the query planner format follow-up searches?
+
+[AI ASSISTANT]
+Dense embedding models like Voyage AI perform best on concise entity-keyword queries.
+Constrain the query planner with a strict prompt:
+1. Return ONLY a JSON array of 1-3 targeted search phrases.
+2. Require the planner to extract concrete named entities discovered in Hop 1.
+3. Example: ["The Iron-Ring Cartel accord", "The Iron-Ring Cartel victory"].
+4. Forbid conversational filler words.
+
+[USER]
+We implemented this and our complete chain retrieval jumped significantly. We will set MAX_HOPS to 3 to prevent infinite loops.
+================================================================================

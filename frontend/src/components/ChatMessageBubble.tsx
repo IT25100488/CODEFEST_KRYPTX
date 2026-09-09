@@ -42,6 +42,47 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
     );
   }
 
+  const renderFormattedContent = (text: string) => {
+    // Split into paragraphs by double line breaks
+    const paragraphs = text.split(/\n\s*\n/);
+    return paragraphs.map((para, pIdx) => {
+      const trimmed = para.trim();
+      if (!trimmed) return null;
+
+      // Clean leading markdown headers if any
+      const isHeader = trimmed.startsWith('### ') || trimmed.startsWith('## ') || trimmed.startsWith('# ');
+      const cleanPara = trimmed.replace(/^#{1,4}\s+/, '');
+
+      // Parse bold **text**
+      const parts = cleanPara.split(/(\*\*.*?\*\*)/g);
+
+      if (isHeader) {
+        return (
+          <h4 key={pIdx} className="text-base font-bold text-slate-900 mb-2">
+            {parts.map((part, idx) =>
+              part.startsWith('**') && part.endsWith('**') ? part.slice(2, -2) : part
+            )}
+          </h4>
+        );
+      }
+
+      return (
+        <p key={pIdx} className="mb-2.5 last:mb-0 text-slate-800 leading-relaxed">
+          {parts.map((part, idx) => {
+            if (part.startsWith('**') && part.endsWith('**')) {
+              return (
+                <strong key={idx} className="font-semibold text-slate-950">
+                  {part.slice(2, -2)}
+                </strong>
+              );
+            }
+            return part;
+          })}
+        </p>
+      );
+    });
+  };
+
   return (
     <div className="flex gap-3.5 my-5 max-w-3xl animate-fadeIn">
       {/* Bot Icon */}
@@ -84,8 +125,8 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
         {/* Main Answer Card */}
         {!message.isError && (
           <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-sm text-slate-800 space-y-3">
-            <div className="text-sm leading-relaxed whitespace-pre-line font-sans">
-              {message.content}
+            <div className="text-sm font-sans">
+              {renderFormattedContent(message.content)}
             </div>
 
             {/* Citation Pills */}

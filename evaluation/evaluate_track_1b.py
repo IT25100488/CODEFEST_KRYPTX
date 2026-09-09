@@ -1,26 +1,37 @@
 import json
+import sys
 from pathlib import Path
 
-from src.rag.pipeline import run_rag_pipeline
-
-
 # ---------------------------------------------------------
-# PATHS
+# PATHS & PYTHON PATH SETUP
 # ---------------------------------------------------------
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from rag.pipeline import run_rag_pipeline
 
 QUESTIONS_FILE = (
     PROJECT_ROOT
     / "data"
     / "Ashen_Era_Archive"
-    / "Ashen_Era_Archive"
     / "sample_questions.json"
 )
+if not QUESTIONS_FILE.exists():
+    nested_path = (
+        PROJECT_ROOT
+        / "data"
+        / "Ashen_Era_Archive"
+        / "Ashen_Era_Archive"
+        / "sample_questions.json"
+    )
+    if nested_path.exists():
+        QUESTIONS_FILE = nested_path
 
 RESULTS_DIR = (
     PROJECT_ROOT
-    / "src"
     / "evaluation"
     / "results"
 )

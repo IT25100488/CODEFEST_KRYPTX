@@ -1,0 +1,390 @@
+KRYPTX Codefest 2026 - ChatGPT Development Log
+==============================================
+
+Note:
+This file is a concise project-development conversation log reconstructed from the current ChatGPT conversation context. It focuses on the work directly related to the KRYPTX Codefest project and excludes unrelated personal conversations.
+
+Project:
+CODEFEST_KRYPTX
+Sub-track:
+1B - Connecting Facts Across Thousands of Pages
+
+==================================================
+1. Environment and Repository Setup
+==================================================
+
+USER:
+I am working on the CODEFEST_KRYPTX project in:
+C:\Users\vishw\Documents\GitHub\CODEFEST_KRYPTX
+
+ASSISTANT:
+Helped diagnose PowerShell / virtual environment issues and npm/path problems.
+
+Key guidance included:
+- Use cmd when PowerShell execution policy blocks activation.
+- Activate the environment using:
+  .venv\Scripts\activate.bat
+- Keep .venv/ ignored by Git.
+- Keep .env ignored and use .env.example for configuration guidance.
+
+==================================================
+2. Retrieval Pipeline and Import Fixes
+==================================================
+
+USER:
+Worked through errors in the multi-hop retrieval pipeline and module imports.
+
+ASSISTANT:
+Reviewed the project layout and corrected imports to match the actual root-level package structure.
+
+Examples:
+- retrieval/agentic_multi_hop.py
+  from data_pipeline.retriever import retrieve
+  from llm.query_planner import plan_follow_up_queries
+
+- llm/query_planner.py
+  from llm.client import ask_llm
+
+- rag/pipeline.py
+  from retrieval.agentic_multi_hop import agentic_multi_hop_retrieve
+  from retrieval.evidence_ranker import rank_evidence
+  from rag.answer_generator import generate_answer, print_answer
+
+- rag/answer_generator.py
+  from llm.client import ask_llm
+
+- api/main.py
+  from rag.pipeline import run_rag_pipeline
+
+==================================================
+3. Evaluation Setup
+==================================================
+
+USER:
+Needed a way to evaluate the Track 1B retrieval system.
+
+ASSISTANT:
+Helped build a manual expected-evidence evaluation setup for the 7 Track 1B development questions.
+
+Files created/used:
+- evaluation/expected_evidence.json
+- evaluation/run_retrieval_baseline.py
+- evaluation/baseline/results/
+- evaluation/baseline/baseline_summary.json
+- evaluation/agentic/results/
+- evaluation/agentic/run_agentic_summary.py
+- evaluation/agentic/agentic_summary.json
+- evaluation/compare_retrieval_methods.py
+- evaluation/retrieval_comparison.json
+
+Baseline result:
+- Complete-chain retrieval rate: 14.29% (1/7)
+
+Agentic multi-hop retrieval result:
+- Complete-chain retrieval rate: 85.71% (6/7)
+
+Absolute improvement:
+- +71.42 percentage points
+
+==================================================
+4. Multi-Hop Query Planner Improvements
+==================================================
+
+USER:
+One development question failed:
+"Which accord was ultimately won by the faction of which Ederon Fellgard is a member?"
+
+ASSISTANT:
+Analyzed the failure chain:
+Ederon Fellgard -> The Iron-Ring Cartel -> The Leaden Accord
+
+Improved deterministic fallback logic so it:
+- prioritizes named entities from the original question
+- continues from newly discovered intermediate entities
+- combines linked entities with relationship terms from the question
+- supports hyphenated entity names such as "Iron-Ring Cartel"
+
+After the fix, the question passed end-to-end.
+
+==================================================
+5. Answer Generator Robustness
+==================================================
+
+USER:
+The answer generator sometimes returned bad output or unreliable source filenames.
+
+ASSISTANT:
+Changed the answer generation strategy to structured JSON:
+
+{
+  "answer": "<direct concise answer>",
+  "reasoning": "<short evidence-grounded explanation>",
+  "evidence_ids": [1, 2]
+}
+
+Added parsing that:
+- strips markdown fences
+- extracts the first JSON object
+- parses it safely
+
+Changed source attribution so the LLM only selects evidence IDs and Python maps them back to the original retrieval metadata.
+
+This fixed source filename hallucination / extension mismatches.
+
+Also added a one-time retry when the LLM returns invalid JSON.
+
+A real failure observed during testing was:
+User Safety: safe
+
+After the retry logic was added, the affected question passed.
+
+==================================================
+6. End-to-End Development Testing
+==================================================
+
+USER:
+Ran the full rag.pipeline on all 7 Track 1B development questions.
+
+ASSISTANT:
+Tracked end-to-end results.
+
+Before final fixes:
+- 5/7 passed
+- 71.43%
+
+After targeted planner and answer-generator fixes:
+- 7/7 passed
+- 100% development-set accuracy
+
+Important caveat:
+This is development-set performance after tuning on those questions and is not a guarantee of hidden-test performance.
+
+==================================================
+7. API Setup
+==================================================
+
+USER:
+Needed to test the backend API.
+
+ASSISTANT:
+Helped verify the FastAPI application.
+
+Relevant endpoints:
+- GET /api/health
+- POST /api/chat
+
+Recommended command:
+uvicorn api.main:app --reload
+
+Swagger:
+http://127.0.0.1:8000/docs
+
+A POST /api/chat request completed successfully with HTTP 200.
+
+==================================================
+8. Git Cleanup and Submission Hygiene
+==================================================
+
+USER:
+Shared git status showing modified __pycache__ files, evaluation files, code changes, and an unstaged evaluation/evaluation file.
+
+ASSISTANT:
+Recommended:
+- restore generated __pycache__ changes
+- stage only intentional code/evaluation files
+- leave the strange evaluation/evaluation file unstaged until verified
+- verify .env and data/vector_db/ are not staged
+- commit and push intentional changes
+
+Relevant commits created during the process included:
+- feat: improve multi-hop retrieval and evaluation
+- docs: add project README
+- docs: add AI usage disclosure
+- docs: add architecture decisions and limitations
+- docs: add system architecture diagram
+- fix: add missing RAG dependencies
+
+==================================================
+9. README and Documentation
+==================================================
+
+USER:
+Asked whether the new README was correct.
+
+ASSISTANT:
+Reviewed the README structure and confirmed it covered:
+- project description
+- team responsibilities
+- main features
+- project structure
+- environment setup
+- vector database
+- running the RAG pipeline
+- running the API
+- architecture overview
+- evaluation results
+- robustness improvements
+- security
+
+Later helped create:
+- docs/architecture.md
+- docs/decisions.md
+- docs/limitations.md
+
+==================================================
+10. Architecture Diagram
+==================================================
+
+USER:
+Asked to create a professional system architecture diagram.
+
+ASSISTANT:
+Generated a diagram showing:
+
+Data Preparation Layer:
+Ashen Era Archive -> Extraction & Cleaning -> Chunking -> Voyage AI Embeddings -> ChromaDB
+
+RAG / Multi-Hop Layer:
+User Question -> Initial Retrieval -> LLM Query Planner -> Follow-up Multi-Hop Retrieval -> Evidence Deduplication & Ranking -> Grounded Answer Generator
+
+Delivery Layer:
+FastAPI Backend -> Frontend Chat UI -> Answer + Sources
+
+QA & Evaluation:
+sample_questions.json -> Baseline Retrieval Evaluation -> Agentic Retrieval Evaluation -> Comparison Report
+
+The image was then committed to:
+docs/diagrams/kryptx_codefest_system_architecture.png
+
+==================================================
+11. Submission Report Requirements
+==================================================
+
+USER:
+Shared the competition report requirement:
+A single PDF, maximum 5 pages, containing:
+- Problem statement and chosen sub-track
+- Solution overview and architecture with diagram
+- Key technical decisions and reasons
+- What works, what does not, and limitations including failed approaches
+- AI Usage Disclosure
+- Team member names, roles, and contributions
+
+ASSISTANT:
+Proposed a 5-page structure:
+1. Problem + solution overview
+2. Architecture
+3. Technical decisions
+4. Evaluation, failures, limitations
+5. AI disclosure + team contributions
+
+The final PDF was intentionally left until later.
+
+==================================================
+12. AI Usage Disclosure
+==================================================
+
+USER:
+Asked what to include for AI usage.
+
+ASSISTANT:
+Helped create:
+ai_usage/ai-usage-disclosure.md
+
+The disclosure covered:
+- ChatGPT usage for architecture, debugging, evaluation, documentation, and testing
+- OpenRouter-hosted LLM usage for query planning and answer generation
+- Voyage AI for embeddings
+- human decisions made by the team
+- examples of iterative correction and validation
+- evaluation results
+- chat-log location
+
+==================================================
+13. Requirements Check
+==================================================
+
+USER:
+Shared requirements.txt.
+
+ASSISTANT:
+Identified missing runtime dependencies:
+- chromadb
+- voyageai
+- openai
+- python-dotenv
+
+USER:
+Ran:
+pip freeze | findstr /I "chromadb voyageai openai python-dotenv"
+
+Output:
+chromadb==1.5.9
+openai==3.8.0
+python-dotenv==1.2.3
+voyageai==0.5.0
+
+ASSISTANT:
+Recommended adding exactly those versions to requirements.txt and committing them.
+
+==================================================
+14. QA Branch
+==================================================
+
+USER:
+Created a local branch named QATestPart but could not see it on GitHub.
+
+ASSISTANT:
+Explained that the branch existed only locally and must be pushed with:
+git push -u origin QATestPart
+
+Also warned not to push directly to main because teammates requested QA work stay on the branch.
+
+USER:
+Shared git status with many modified files and new:
+- ai_usage/chat_logs/
+- docs/submission_report_template.md
+- frontend/.env.example
+
+ASSISTANT:
+Recommended adding AI chat histories before the final QA-branch commit and pushing only QATestPart.
+
+==================================================
+15. Key Project Facts Recorded During Development
+==================================================
+
+- ChromaDB collection: ashen_era_archive
+- ChromaDB path: data/vector_db/
+- Indexed chunks: 2,481
+- Voyage embedding model used during development: voyage-3
+- LLM gateway: OpenRouter
+- Retrieval hops: maximum 3
+- Results per query: 5
+- Maximum accumulated evidence: 20
+- Final evidence limit: 8
+- Baseline complete-chain retrieval: 14.29%
+- Agentic complete-chain retrieval: 85.71%
+- Improvement: +71.42 percentage points
+- Post-fix development-set end-to-end accuracy: 7/7 (100%)
+
+==================================================
+16. Important Human Decisions / Corrections
+==================================================
+
+The team did not use AI as a one-shot solution generator.
+
+Examples of human-led corrections:
+- verified and corrected wrong package import paths
+- manually reviewed expected evidence chains
+- identified first-hop vs second-hop retrieval failures
+- recognized planner drift and malformed fallback queries
+- updated entity handling for hyphenated names
+- changed source attribution to deterministic metadata mapping
+- added one-time retry only after observing a real invalid LLM response
+- distinguished development-set results from unseen-test claims
+- kept .env and vector DB out of Git
+- used branch-based workflow rather than pushing QA changes directly into main
+
+==================================================
+End of Project Chat Log
+==================================================

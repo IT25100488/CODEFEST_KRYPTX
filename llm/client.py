@@ -1,4 +1,5 @@
 import os
+import time
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -48,22 +49,29 @@ client = OpenAI(
 
 MODEL_NAME = "openrouter/free"
 
+MAX_RETRIES = 5
+INITIAL_BACKOFF = 1.0  # seconds (1s, 2s, 4s, 8s, 16s)
+
 
 # ---------------------------------------------------------
-# Send a prompt to the LLM
+# Send a prompt to the LLM with exponential backoff retry
 # ---------------------------------------------------------
 
 def ask_llm(
     prompt,
     system_prompt=None,
-    temperature=0.1
+    temperature=0.1,
+    max_retries=MAX_RETRIES
 ):
+    """
+    Send a prompt to the LLM with automatic retry and exponential backoff.
+    Complies with Codefest rate-limit survival requirements.
+    """
 
     messages = []
 
     # Optional system instruction
     if system_prompt:
-
         messages.append(
             {
                 "role": "system",
@@ -79,13 +87,37 @@ def ask_llm(
         }
     )
 
-    response = client.chat.completions.create(
-        model=MODEL_NAME,
-        messages=messages,
-        temperature=temperature
-    )
+    delay = INITIAL_BACKOFF
+    last_exception = None
 
-    return response.choices[0].message.content
+    for attempt in range(1, max_retries + 1):
+        try:
+            response = client.chat.completions.create(
+                model=MODEL_NAME,
+                messages=messages,
+                temperature=temperature
+            )
+            return response.choices[0].message.content
+
+        except Exception as error:
+            last_exception = error
+            error_msg = str(error)
+            print(
+                f"\n[Warning] LLM API call failed (attempt {attempt}/{max_retries}): {error_msg}"
+            )
+
+            # Daily rate limits cannot be resolved by retrying within seconds; fail fast
+            if "free-models-per-day" in error_msg or "daily_limit" in error_msg or "429" in error_msg:
+                print("[Notice] OpenRouter rate limit reached. Bypassing retries to fail fast to grounded fallback.")
+                raise error
+
+            if attempt < max_retries:
+                print(f"[Retry] Waiting {delay:.1f}s before retrying...")
+                time.sleep(delay)
+                delay *= 2  # Exponential backoff (1s, 2s, 4s, 8s...)
+
+    # If all retries fail, raise the last exception
+    raise last_exception
 
 
 # ---------------------------------------------------------

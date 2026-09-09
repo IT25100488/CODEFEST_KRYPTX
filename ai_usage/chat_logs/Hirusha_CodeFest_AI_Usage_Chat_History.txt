@@ -1,0 +1,345 @@
+CODEFEST 2026 – AI USAGE / CHAT HISTORY LOG Team Member: Hirusha – Data
+Engineering / Data Pipeline Project: Intelligent Document Assistant –
+Ashen Era Archive
+
+IMPORTANT NOTE This is an organized/reconstructed AI-usage log based on
+the conversation context available in this chat. It focuses on Hirusha’s
+contribution. It is not claimed to be a byte-for-byte export of the
+entire ChatGPT conversation. If the competition requires the complete
+raw chat, export the original ChatGPT conversation separately.
+
+====================================================================== 1.
+ROLE AND CONTRIBUTION
+======================================================================
+
+Hirusha’s role: - Data Engineer - Main responsibility: document
+ingestion, processing, chunking, embeddings, vector database foundation,
+and integration troubleshooting.
+
+Main work: 1. Inspect the Ashen Era Archive. 2. Extract text from
+supported document formats. 3. Prepare and clean text. 4. Split
+documents into overlapping chunks. 5. Generate semantic embeddings. 6.
+Store embeddings and metadata in ChromaDB. 7. Make indexed data
+available to the retrieval/RAG pipeline. 8. Test and troubleshoot the
+pipeline. 9. Document technical decisions and limitations.
+
+======================================================================
+2. DATASET INSPECTION
+======================================================================
+
+Local archive inspection found approximately 341 files: - PDF: 63 -
+DOCX: 50 - Markdown: 95 - TXT: 47 - PNG: 85 - JSON: 1
+
+The competition documentation described the wider corpus as
+approximately 415 documents and 1,277 pages.
+
+Local dataset path: data/Ashen_Era_Archive/Ashen_Era_Archive
+
+An inspection script was used to examine files and print content
+extracts.
+
+======================================================================
+3. DOCUMENT EXTRACTION
+======================================================================
+
+Supported text formats included: - PDF - DOCX - Markdown - TXT
+
+Libraries used/discussed: - pathlib - pypdf - python-docx -
+python-dotenv - Voyage AI - ChromaDB
+
+PNG images and the JSON file were not processed by the normal text
+extraction path and were recorded as a limitation.
+
+======================================================================
+4. CHUNKING
+======================================================================
+
+Chunking configuration: - Chunk size: 2500 characters - Overlap: 300
+characters
+
+Purpose: - Preserve context between neighboring chunks. - Provide enough
+context for multi-hop retrieval.
+
+Approximately 2,481 chunks were produced.
+
+======================================================================
+5. EMBEDDINGS
+======================================================================
+
+Embedding service: Voyage AI
+
+Initial model: voyage-3
+
+Embedding dimension: 1024
+
+Embeddings were used to represent document chunks semantically so that
+relevant evidence could be retrieved even when wording differed from the
+query.
+
+A later review of competition documentation identified the Voyage 4
+series as the recommended current-generation option for the available
+free allowance.
+
+Honest documentation wording: “During development, we initially
+implemented the embedding pipeline using Voyage-3 (1024-dimensional
+embeddings). The competition documentation subsequently recommends the
+Voyage-4 series for the available free allowance, so migration to a
+compatible Voyage-4 model was identified as a deployment consideration.”
+
+======================================================================
+6. CHROMADB VECTOR DATABASE
+======================================================================
+
+Persistent ChromaDB location: data/vector_db
+
+Collection: ashen_era_archive
+
+Approximate records: 2,481
+
+Stored information included: - Chunk embeddings - Chunk text/content -
+Source metadata
+
+Metadata fields included: - chunk_id - document_id - filename -
+source_folder - relative_path - chunk_index - text/content
+
+Example chunk ID: DOC_000015_CHUNK_0008
+
+Metadata preservation supports evidence attribution and source
+identification.
+
+======================================================================
+7. DATA PIPELINE
+======================================================================
+
+Ashen Era Archive | v Document discovery | v File-type detection | v
+Text extraction | v Text preparation | v Chunking | v Voyage embeddings
+| v ChromaDB | v Semantic retrieval | v Multi-hop RAG | v Evidence | v
+LLM answer generation
+
+Indexing was separated from runtime retrieval so the complete archive
+did not need to be re-embedded for every question.
+
+======================================================================
+8. TECHNICAL DECISIONS
+======================================================================
+
+1.  Unified ingestion for supported text formats.
+2.  300-character chunk overlap to preserve context.
+3.  2500-character chunks to retain useful context for connected-fact
+    questions.
+4.  Semantic embeddings for meaning-based retrieval.
+5.  Persistent local ChromaDB for reusable indexing.
+6.  Source metadata preservation for evidence attribution.
+7.  Separate indexing and runtime retrieval.
+
+======================================================================
+9. PROBLEMS AND FIXES
+======================================================================
+
+A. Fresh virtual environment dependency issue ChromaDB was missing in
+the fresh .venv. It was installed and verified.
+
+B. Stale imports Several files used src.* imports even though the
+project used root-level packages.
+
+Imports were corrected in: - rag/pipeline.py -
+retrieval/agentic_multi_hop.py - retrieval/multi_hop.py -
+llm/query_planner.py - rag/answer_generator.py -
+evaluation/evaluate_track_1b.py
+
+After corrections and dependency installation, the RAG pipeline import
+succeeded.
+
+C. PNG/JSON limitation PNG and JSON were not included in the normal text
+extraction pipeline and were documented as a limitation.
+
+======================================================================
+10. ENVIRONMENT AND PIPELINE VERIFICATION
+======================================================================
+
+Active Python executable: C:Dissanayaka_KRYPTX.venv.exe
+
+RAG import test: python -c “from rag.pipeline import run_rag_pipeline;
+print(‘RAG pipeline import successful’)”
+
+Result: RAG pipeline import successful
+
+Backend: python -m uvicorn api.main:app –reload
+
+Backend address: http://127.0.0.1:8000
+
+Health endpoint returned HTTP 200.
+
+======================================================================
+11. MULTI-HOP RAG TEST
+======================================================================
+
+Question: “Which war did Ravena Stormwell’s own faction ultimately win?”
+
+Successful answer: “The War of Drowned Light”
+
+Reasoning: - Ravena Stormwell is identified as a member of The Silent
+Choir. - The Silent Choir is recorded as the victor of the War of
+Drowned Light.
+
+Sources included: - the_annals_of_the_ashen_era.docx -
+the_ashen_chronicles_volume_i_the_kindling_years.docx
+
+Verified chain: Ravena Stormwell | v The Silent Choir | v War of Drowned
+Light | v Final answer
+
+======================================================================
+12. TRACK 1B TESTING
+======================================================================
+
+The official Track 1B set contains 7 questions.
+
+Examples tested/discussed:
+
+1.  “Which accord was ultimately won by the faction of which Ederon
+    Fellgard is a member?” Answer: The Leaden Accord.
+
+2.  “Which individual was a member of the faction that ultimately won
+    the War of Drowned Light?” The system returned valid members of The
+    Silent Choir.
+
+3.  “Which war did Ravena Stormwell’s own faction ultimately win?”
+    Answer: The War of Drowned Light.
+
+A later rephrased Ederon question experienced an LLM request failure.
+This was identified as an LLM/API reliability issue rather than evidence
+of incorrect document retrieval.
+
+======================================================================
+13. FRONTEND/BACKEND INTEGRATION
+======================================================================
+
+Backend: - FastAPI - /api/chat - /api/health
+
+Frontend: - Next.js - /api/ask proxy
+
+The frontend initially timed out during long RAG/LLM requests because
+its timeout was approximately 45 seconds.
+
+The timeout was increased to 120 seconds.
+
+After the change, the frontend successfully received: - Answer -
+Reasoning - Sources
+
+======================================================================
+14. OPENROUTER TESTING
+======================================================================
+
+The LLM client initially used:
+
+MODEL_NAME = “openrouter/free”
+
+A specific model was then tested.
+
+Initial invalid model ID: nvidia/nemotron-3-ultra:free
+
+OpenRouter returned HTTP 400: “nvidia/nemotron-3-ultra:free is not a
+valid model ID”
+
+The model ID was corrected to: nvidia/nemotron-3-ultra-550b-a55b:free
+
+The next failure was:
+
+HTTP 429 Rate limit exceeded: free-models-per-day
+
+Reported values included: X-RateLimit-Limit: 50 X-RateLimit-Remaining: 0
+
+This showed that the application was reaching OpenRouter successfully,
+but the free-model request allowance was exhausted.
+
+======================================================================
+15. API KEY / ENVIRONMENT VERIFICATION
+======================================================================
+
+The API key was verified without exposing the full secret.
+
+Output: Key exists: True Key ending: 0d3c2d
+
+OpenRouter client creation was also verified.
+
+Output: 0d3c2d OpenRouter client created successfully
+
+This confirmed: - .env was being loaded. - The active .venv was reading
+the key. - The OpenRouter OpenAI-compatible client could be created.
+
+The complete API key was never included in this log.
+
+======================================================================
+16. LIMITATIONS AND LESSONS
+======================================================================
+
+1.  Free LLM APIs have request quotas and rate limits.
+2.  Free model availability can change.
+3.  LLM/API failure should be distinguished from RAG/backend failure.
+4.  PNG/JSON were not included in normal text extraction.
+5.  Voyage-3 was used during development; Voyage-4 migration was
+    identified as a deployment consideration.
+6.  Robust retry/fallback handling is preferable to depending on a
+    single free model.
+
+Possible robust architecture: RAG | v LLM client | +–> OpenRouter free
+model | +–> fallback provider/local model | v Final answer
+
+======================================================================
+17. QA / EVALUATION EVIDENCE
+======================================================================
+
+Recommended QA evidence: 1. Official 7 Track 1B questions. 2. Expected
+answer vs actual answer. 3. Multi-hop chain verification. 4.
+Source/evidence verification. 5. Rephrased question testing. 6.
+Unsupported-question/hallucination testing. 7. API endpoint testing. 8.
+Rate-limit/failure testing. 9. Response-time measurements. 10.
+Regression testing after model or retrieval changes.
+
+Suggested evaluation structure: evaluation/ ├── README.md ├──
+track_1b_questions.json ├── track_1b_results.json ├──
+track_1b_results.csv ├── rephrased_questions.json ├──
+hallucination_tests.json ├── api_tests/ └── screenshots/
+
+======================================================================
+18. AI USAGE DISCLOSURE
+======================================================================
+
+ChatGPT was used as an AI development assistant.
+
+Examples of assistance: - Understanding project architecture. -
+Explaining data pipeline design. - Troubleshooting
+Python/import/dependency issues. - Explaining ChromaDB and embeddings. -
+Reviewing multi-hop RAG behavior. - Interpreting backend and OpenRouter
+errors. - Suggesting QA/evaluation strategies. - Helping prepare
+technical documentation and contribution notes.
+
+The team should preserve the original ChatGPT conversation export
+separately if the competition requires the complete raw AI chat history.
+
+Team members should be able to explain and modify the submitted code.
+
+======================================================================
+19. CONTRIBUTION SUMMARY
+======================================================================
+
+Hirusha’s main technical contribution was the data-engineering
+foundation of the Intelligent Document Assistant.
+
+The contribution transformed the heterogeneous archive into a searchable
+semantic knowledge base:
+
+Documents ↓ Text extraction ↓ Chunking ↓ Embeddings ↓ ChromaDB ↓
+Semantic retrieval ↓ Multi-hop RAG
+
+Approximately 255 supported text documents from the local archive were
+processed into approximately 2,481 chunks.
+
+Source metadata was preserved so retrieval and answer generation could
+provide evidence and source references.
+
+The work also included environment setup, dependency fixes, import
+fixes, integration troubleshooting, and verification using Track 1B
+questions.
+
+END OF LOG
